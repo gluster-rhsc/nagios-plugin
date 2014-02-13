@@ -55,15 +55,13 @@ rm -rf %{buildroot}
 %post
 if [ $1 == 1 ]; then
 cat >> /etc/nagios/nrpe.cfg <<EOF
- "EOF"
 ### gluster nrpe plugins ###
-command[check_disk_gluster]=/usr/bin/python /usr/lib64/nagios/plugins/check_disk_gluster -w 20 -c 10
-command[check_memory_gluster]=/usr/bin/python /usr/lib64/nagios/plugins/check_memory_gluster -w 20 -c 10
-command[check_cpu_gluster]=/usr/bin/python /usr/lib64/nagios/plugins/check_cpu_gluster -w 20 -c 10
-command[check_network_gluster]=/usr/bin/python /usr/lib64/nagios/plugins/check_network_gluster -w 20 -c 10
+command[check_disk_gluster]=/usr/lib64/nagios/plugins/check_disk_gluster -w 20 -c 10
+command[check_memory_gluster]=/usr/lib64/nagios/plugins/check_memory_gluster -w 20 -c 10
+command[check_cpu_multicore]=/usr/lib64/nagios/plugins/check_cpu_multicore.py -w 80 -c 90
+command[check_network_gluster]=/usr/lib64/nagios/plugins/check_network_gluster -w 20 -c 10
 EOF
 fi
-EOF
 
 %files
 %defattr(-, root, root, -)

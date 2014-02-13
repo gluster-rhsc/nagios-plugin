@@ -54,7 +54,7 @@ if [ $1 == 1 ]; then
 cat >> /etc/nagios/nrpe.cfg <<EOF
 
 ### gluster nrpe plugins ###
-command[check_disk_and_inode]=/usr/lib64/nagios/plugins/check_disk_and_inode -w 20 -c 10
+command[check_disk_and_inode]=/usr/lib64/nagios/plugins/check_disk_and_inode.py -w 20 -c 10
 command[check_memory]=/usr/lib64/nagios/plugins/check_memory.py -w 70 -c 85
 command[check_swap_usage]=/usr/lib64/nagios/plugins/check_swap_usage.py -w 30 -c 15
 command[check_cpu_multicore]=/usr/lib64/nagios/plugins/check_cpu_multicore.py -w 80 -c 90

@@ -5,13 +5,10 @@
 # Purpose: RPM Spec file for installing gluster nrpe plugins
 # Version 1.00:13 Feb 2014 Created.
 #===============================================================================
-# No debuginfo:
 %define  __spec_install_post %{nil}
 %define  debug_package %{nil}
 %define __os_install_post %{_dbpath}/brp-compress
 
-#%%define _topdir           /home/mbarto/rpm
-#%%define _tmppath          %{_topdir}/tmp
 %define name      gluster-nrpe
 %define summary   gluster-nrpe plugins for nodes
 %define version   1.1
@@ -55,11 +52,12 @@ rm -rf %{buildroot}
 %post
 if [ $1 == 1 ]; then
 cat >> /etc/nagios/nrpe.cfg <<EOF
+
 ### gluster nrpe plugins ###
-command[check_disk_gluster]=/usr/lib64/nagios/plugins/check_disk_gluster -w 20 -c 10
+command[check_disk_and_inode]=/usr/lib64/nagios/plugins/check_disk_and_inode -w 20 -c 10
 command[check_memory_gluster]=/usr/lib64/nagios/plugins/check_memory_gluster -w 20 -c 10
 command[check_cpu_multicore]=/usr/lib64/nagios/plugins/check_cpu_multicore.py -w 80 -c 90
-command[check_network_gluster]=/usr/lib64/nagios/plugins/check_network_gluster -w 20 -c 10
+command[check_interfaces]=/usr/lib64/nagios/plugins/sadf.py net
 EOF
 fi
 

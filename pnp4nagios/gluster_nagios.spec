@@ -5,6 +5,7 @@
 # Purpose: RPM Spec file for installing and seting up nagios server
 # Version 1.00:13 Feb 2014 Created.
 #===============================================================================
+
 %define  debug_package %{nil}
 
 %define name      gluster-nagios
@@ -39,16 +40,21 @@ network, cpu, memory and etc.,
 %build
 
 %install
-rm -rf %{buildroot}
-mkdir -p %{buildroot}
-cp -a * /usr/local/pnp4nagios/share/templates.dist
+mkdir -p %{buildroot}/usr/local/pnp4nagios/share/templates.dist
+cp check_cpu_multicore.php %{buildroot}/usr/local/pnp4nagios/share/templates.dist
+cp check_disk_and_inode.php %{buildroot}/usr/local/pnp4nagios/share/templates.dist
+cp check_interfaces.php %{buildroot}/usr/local/pnp4nagios/share/templates.dist
+cp check_memory.php %{buildroot}/usr/local/pnp4nagios/share/templates.dist
+cp check_swap_usage.php %{buildroot}/usr/local/pnp4nagios/share/templates.dist
 
 %clean
 rm -rf %{buildroot}
 
 %post
 if [ $1 == 1 ]; then
-cat >> /etc/nagios/objects/commands.cfg <<EOF
+CommandFile="/etc/nagios/objects/commands.cfg"
+if ! grep -q "gluster nagios template" $CommandFile; then
+cat >> $CommandFile <<EOF
 
 ### gluster nagios template ###
 define command {
@@ -77,10 +83,17 @@ define command {
 }
 EOF
 fi
+fi
 
 %files
 %defattr(-, root, root, -)
+/usr/local/pnp4nagios/share/templates.dist/check_cpu_multicore.php
+/usr/local/pnp4nagios/share/templates.dist/check_disk_and_inode.php
+/usr/local/pnp4nagios/share/templates.dist/check_interfaces.php
+/usr/local/pnp4nagios/share/templates.dist/check_memory.php
+/usr/local/pnp4nagios/share/templates.dist/check_swap_usage.php
+
 
 %changelog
-* Thu Feb 13 2014 Timothy Asir Jeyasing
+* Thu Feb 13 2014 Timothy Asir Jeyasingh <tjeyasin@redhat.com>
 - Initial release

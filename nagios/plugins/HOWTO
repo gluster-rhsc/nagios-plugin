@@ -1,24 +1,29 @@
 sadf.py -- this plugin uses sysstat to collect data
 =====================================================
+* This plugin depends on sysstat.  After installing sysstat, edit
+  /etc/cron.d/sysstat to set /usr/lib64/sa/sa1 to run every one
+  minute.  Restart crond after editing /etc/cron.d/sysstat.  Below is
+  a sample configuration
+
+    */1 * * * * root /usr/lib64/sa/sa1 1 1
 
 * add below entry in /etc/nagios/objects/commands.cfg
 
-# 'check_interfaces' command definition
-define command{
-        command_name    check_interfaces
-        command_line    /usr/bin/python $USER1$/sadf.py net
-        }
+    # 'check_interfaces' command definition
+    define command{
+            command_name    check_interfaces
+            command_line    /usr/bin/python $USER1$/sadf.py net
+            }
 
 * add below entry in /etc/nagios/objects/localhost.cfg
 
-# Define a service to check all network interfaces on the local machine.
-define service{
-        use                             local-service         ; Name of service template to use
-        host_name                       localhost
-        service_description             NetworkInterfaces
-        check_command                   check_interfaces
-        notifications_enabled           0
-        }
+    # Define a service to check all network interfaces on the local machine.
+    define service{
+            use                             local-service
+            host_name                       localhost
+            service_description             NetworkInterfaces
+            check_command                   check_interfaces
+            notifications_enabled           0
+            }
 
 * restart nagios to pickup the changes
-

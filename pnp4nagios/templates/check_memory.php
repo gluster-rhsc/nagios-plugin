@@ -16,34 +16,34 @@ $def[1] .= "DEF:buffer_mem_in=$RRDFILE[1]:$DS[3]:AVERAGE " ;
 $def[1] .= "DEF:cached_mem_in=$RRDFILE[1]:$DS[4]:AVERAGE " ;
 
 $def[1] .= "CDEF:total_mem_out=total_mem_in ";
-$def[1] .= "AREA:total_mem_out#BCF5FD:\"Total       \" ";
+$def[1] .= "LINE2:total_mem_out#000000:\"Total       \" ";
 $def[1] .= "GPRINT:total_mem_in:LAST:\"%10.2lf %s$UNIT[1] LAST \" ";
 $def[1] .= "GPRINT:total_mem_in:MAX:\"%10.2lf %s$UNIT[1] MAX \" ";
 $def[1] .= "GPRINT:total_mem_in" . ':AVERAGE:"%10.2lf %sGB AVERAGE \j" ';
 
 $def[1] .= "CDEF:used_mem_out=used_mem_in ";
-$def[1] .= "AREA:used_mem_out#DD86F5:\"Used        \" ";
+$def[1] .= "LINE2:used_mem_out#0000ff:\"Used        \" ";
 $def[1] .= "GPRINT:used_mem_in:LAST:\"%10.2lf %s$UNIT[1] LAST \" ";
 $def[1] .= "GPRINT:used_mem_in:MAX:\"%10.2lf %s$UNIT[1] MAX \" ";
 $def[1] .= "GPRINT:used_mem_in" . ':AVERAGE:"%10.2lf %sGB AVERAGE \j" ';
 
 $def[1] .= "CDEF:buffer_mem_out=buffer_mem_in ";
-$def[1] .= "AREA:buffer_mem_out#2B62FA:\"Buffer      \" ";
+$def[1] .= "LINE2:buffer_mem_out#008000:\"Buffer      \" ";
 $def[1] .= "GPRINT:buffer_mem_in:LAST:\"%10.2lf %s$UNIT[1] LAST \" ";
 $def[1] .= "GPRINT:buffer_mem_in:MAX:\"%10.2lf %s$UNIT[1] MAX \" ";
 $def[1] .= "GPRINT:buffer_mem_in" . ':AVERAGE:"%10.2lf %sGB AVERAGE \j" ';
 
 $def[1] .= "CDEF:cached_mem_out=cached_mem_in ";
-$def[1] .= "LINE1:cached_mem_out#2FFF00:\"Cached      \" ";
+$def[1] .= "LINE2:cached_mem_out#800080:\"Cached      \" ";
 $def[1] .= "GPRINT:cached_mem_in:LAST:\"%10.2lf %s$UNIT[1] LAST \" ";
 $def[1] .= "GPRINT:cached_mem_in:MAX:\"%10.2lf %s$UNIT[1] MAX \" ";
 $def[1] .= "GPRINT:cached_mem_in" . ':AVERAGE:"%10.2lf %sGB AVERAGE \j" ';
 
 if ($WARN[1] != ""){
-  $def[1] .= "LINE1:$WARN[1]#FFFF00:\"Warning            \" ";
+  $def[1] .= "LINE2:$WARN[1]#FFA500:\"Warning            \" ";
 }
 if ($CRIT[1] != "") {
-  $def[1] .= "LINE1:$CRIT[1]#FF0000:\" Critical  \\n\" ";
+  $def[1] .= "LINE2:$CRIT[1]#FF0000:\" Critical  \\n\" ";
   }
 
 ?>

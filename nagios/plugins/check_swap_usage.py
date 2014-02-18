@@ -1,17 +1,17 @@
 #!/usr/bin/python
 
-from optparse import OptionParser
+import argparse
 import sys
 import math
 
 def parse_input():
-    parser = OptionParser(usage="%prog -w <warning threshold> -c <critical threshold> [ -h ]",version="%prog ")
-    parser.add_option("-w", "--warning",
-                      action="store", type="string", dest="warn_threshold", help="Warning threshold for used in percentage")
-    parser.add_option("-c", "--critical",
-                      action="store", type="string", dest="crit_threshold", help="Critical threshold for used in percentage")
-    (options, args) = parser.parse_args()
-    return options
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", "--warning",
+                      action="store", type=int, help="Warning threshold for used in percentage")
+    parser.add_argument("-c", "--critical",
+                      action="store", type=int, help="Critical threshold for used in percentage")
+    args = parser.parse_args()
+    return args
 
 def readLines(filename):
     f = open(filename, "r")
@@ -37,8 +37,8 @@ def used(total,free):
     return result
 
 def print_val(msg_type,details,options,percent_free):
-    free_crit_value = (int(details['swapTotal']) * int(options.crit_threshold)) / 100
-    free_war_value = (int(details['swapTotal']) * int(options.warn_threshold)) / 100
+    free_crit_value = (int(details['swapTotal']) * options.critical) / 100
+    free_war_value = (int(details['swapTotal']) * options.warning) / 100
     print "SWAP " + msg_type + " - " + str(percent_free) + "% free (" + to_gb(details['swapFree']) + "GB out of " + to_gb(details['swapTotal']) + "GB) |" +\
         "swap=" + to_gb(details['swapFree']) + "GB;" + to_gb(free_war_value) + ";" + to_gb(free_crit_value) + ";0;" + to_gb(details['swapTotal'])
 
@@ -46,10 +46,10 @@ def display_swap_details(options):
     details = get_swap_details()
     free = (float(details['swapFree']) * 100) / int(details['swapTotal'])
     percent_free = math.ceil(free * 100)/100
-    if int(percent_free) <= int(options.crit_threshold):
+    if int(percent_free) <= options.critical:
         print_val("CRITICAL",details,options,percent_free)
         sys.exit(2)
-    if int(percent_free) <= int(options.warn_threshold):
+    if int(percent_free) <= options.warning:
         print_val("WARNING",details,options,percent_free)
         sys.exit(1)
     else:
@@ -59,13 +59,13 @@ def display_swap_details(options):
 
 def memory_check():
     options = parse_input()
-    if not options.crit_threshold:
+    if not options.critical:
         print "UNKNOWN: Missing critical threshold value."
         sys.exit(3)
-    if not options.warn_threshold:
+    if not options.warning:
         print "UNKNOWN: Missing warning threshold value."
         sys.exit(3)
-    if int(options.crit_threshold) >= int(options.warn_threshold):
+    if options.critical >= options.warning:
         print "UNKNOWN: Critical percentage can't be equal to or greater than warning percentage."
         sys.exit(3)
     display_swap_details(options)

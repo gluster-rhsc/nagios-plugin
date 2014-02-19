@@ -23,6 +23,7 @@ import shlex
 import subprocess
 import json
 import datetime
+import math
 
 _twoMinutes = datetime.timedelta(minutes=2)
 _sadfCpuCommand = "sadf -j -- -P ALL"
@@ -113,6 +114,66 @@ def getLatestSadfNetStat():
 def getLatestSadfSwapStat():
     return _getLatestStat(_sadfExecCmd(_sadfSwapSpaceCommand))
 
+def to_gb(value):
+    result = float(value) / (1024*1024)
+    res =math.ceil(result * 100)/100
+    return str(res)
+
+def showSwapStat(warning, critical):
+    s = getLatestSadfSwapStat()
+    if not s:
+        sys.stdout.write("IFACE UNKNOWN\n")
+        sys.exit(3)
+    totalSwap = s['memory']['swpfree'] + s['memory']['swpused']
+    crit_value = (totalSwap * critical) / 100
+    war_value = (totalSwap * warning) / 100
+    if s['memory']['swpused'] >= crit_value:
+        sys.stdout.write("CRITICAL")
+        eStat = 2
+    elif s['memory']['swpused'] >= war_value:
+        sys.stdout.write("WARNING")
+        eStat = 1
+    else:
+        sys.stdout.write("OK")
+        eStat = 0    
+    sys.stdout.write("- %.2f%% used(%sGB out of %sGB)|Used=%sGB;%s;%s;0;%s\n" % (s['memory']['swpused-percent'],
+                                                                               to_gb(s['memory']['swpused']),
+                                                                               to_gb(totalSwap),to_gb(s['memory']['swpused']),
+                                                                               to_gb(war_value),
+                                                                               to_gb(crit_value),
+                                                                               to_gb(totalSwap)))
+    sys.exit(eStat)
+
+
+def showMemStat(warning, critical):
+    s = getLatestSadfMemStat()
+    if not s:
+        sys.stdout.write("IFACE UNKNOWN\n")
+        sys.exit(3)
+    totalMem = s['memory']['memfree'] + s['memory']['memused']
+    crit_value = (totalMem * critical) / 100
+    war_value = (totalMem * warning) / 100
+    if s['memory']['memused'] >= crit_value:
+        sys.stdout.write("CRITICAL")
+        eStat = 2
+    elif s['memory']['memused'] >= war_value:
+        sys.stdout.write("WARNING")
+        eStat = 1
+    else:
+        sys.stdout.write("OK")
+        eStat = 0    
+    sys.stdout.write("- %.2f%% used(%sGB out of %sGB)|Total=%sGB;%s;%s;0;%s Used=%sGB Buffered=%sGB Cached=%sGB\n" % (s['memory']['memused-percent'],
+                                                                                                                to_gb(s['memory']['memused']),
+                                                                                                                to_gb(totalMem),to_gb(totalMem),
+                                                                                                                to_gb(war_value),
+                                                                                                                to_gb(crit_value),
+                                                                                                                to_gb(totalMem),
+                                                                                                                to_gb(s['memory']['memused']),
+                                                                                                                to_gb(s['memory']['buffers']),
+                                                                                                                to_gb(s['memory']['cached'])))
+    sys.exit(eStat)
+
+
 
 def showNetStat():
     s = getLatestSadfNetStat()
@@ -136,16 +197,26 @@ def showNetStat():
 
 
 def showUsage():
-    usage = "usage: %s <net>\n" % os.path.basename(sys.argv[0])
+    usage = "usage: %s <net>|<mem> <warning> <critical>|<cpu> <warning> <critical>|<swap> <warning> <critical> \n warning must be less than critical" % os.path.basename(sys.argv[0])
     sys.stderr.write(usage)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    type = sys.argv[1]
+    if (type.upper == "NET" and len(sys.argv) != 2) or len(sys.argv) < 2:
         showUsage()
         sys.exit(-1)
 
-    statType = sys.argv[1]
-
-    if statType.upper() == "NET":
+    
+    if type.upper() == "NET":
         showNetStat()
+    else:
+        if len(sys.argv) != 4 or sys.argv[2] > sys.argv[3] :
+            showUsage()
+            sys.exit(-1)
+        if type.upper() == "MEM":
+            showMemStat(int(sys.argv[2]),int(sys.argv[3]))
+        if type.upper() == "SWAP":
+            showSwapStat(int(sys.argv[2]),int(sys.argv[3]))
+        if type.upper() == "CPU":
+            showCpuStat(sys.argv[2],sys.argv[3])        

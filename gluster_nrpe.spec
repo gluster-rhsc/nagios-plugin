@@ -73,18 +73,6 @@ fi
 /usr/lib64/nagios/plugins/gluster/check_memory.py
 /usr/lib64/nagios/plugins/gluster/check_swap_usage.py
 /usr/lib64/nagios/plugins/gluster/sadf.py
-/usr/lib64/nagios/plugins/gluster/check_disk_and_inode.pyc
-/usr/lib64/nagios/plugins/gluster/check_cpu_multicore.pyc
-/usr/lib64/nagios/plugins/gluster/check_disk_and_inode.pyc
-/usr/lib64/nagios/plugins/gluster/check_memory.pyc
-/usr/lib64/nagios/plugins/gluster/check_swap_usage.pyc
-/usr/lib64/nagios/plugins/gluster/sadf.pyc
-/usr/lib64/nagios/plugins/gluster/check_disk_and_inode.pyo
-/usr/lib64/nagios/plugins/gluster/check_cpu_multicore.pyo
-/usr/lib64/nagios/plugins/gluster/check_disk_and_inode.pyo
-/usr/lib64/nagios/plugins/gluster/check_memory.pyo
-/usr/lib64/nagios/plugins/gluster/check_swap_usage.pyo
-/usr/lib64/nagios/plugins/gluster/sadf.pyo
 
 
 %changelog

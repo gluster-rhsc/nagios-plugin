@@ -132,12 +132,13 @@ def showCpuStat(warnLevel, critLevel):
         if cpu['cpu'] == 'all':
             idleCpu = cpu['idle']
         perfLines.append(
-            ("cpu_%s_total=%s;%s;%s cpu_%s_system=%s "
-             "cpu_%s_user=%s cpu_%s_idle=%s" % (cpu['cpu'], 100-cpu['idle'],
-                                                warnLevel, critLevel,
-                                                cpu['cpu'], cpu['system'],
-                                                cpu['cpu'], cpu['user'],
-                                                cpu['cpu'], cpu['idle'])))
+            ("cpu_%s_total=%s%%;%s;%s cpu_%s_system=%s%% "
+             "cpu_%s_user=%s%% cpu_%s_idle=%s%%" % (
+                    cpu['cpu'], 100-cpu['idle'],
+                    warnLevel, critLevel,
+                    cpu['cpu'], cpu['system'],
+                    cpu['cpu'], cpu['user'],
+                    cpu['cpu'], cpu['idle'])))
 
     totalCpuUsage = 100 - idleCpu
     if totalCpuUsage > critLevel:

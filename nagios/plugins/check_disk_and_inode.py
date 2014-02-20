@@ -1,4 +1,22 @@
 #!/usr/bin/python
+# sadf.py -- nagios plugin uses sadf output for perf data
+# Copyright (C) 2014 Red Hat Inc
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+#
+
 
 import re
 import sys
@@ -6,7 +24,7 @@ import commands
 from optparse import OptionParser
 
 
-def getUsageAndFree(command):
+def getUsageAndFree(command, lvm):
     status = commands.getstatusoutput(command)[1].split()
     path = status[-1]
     usagePer = status[-2]
@@ -23,13 +41,13 @@ def getUsageAndFree(command):
         sys.exit(3)
 
 
-def getDisk(path):
-    return getUsageAndFree("df -kh %s" % path)
+def getDisk(path, lvm=False):
+    return getUsageAndFree("df -kh %s" % path, lvm)
 
 
-def getInode(path):
+def getInode(path, lvm=False):
     cmd = "df -i %s" % path
-    usagePer, availablePer, used, avail, dev, path = getUsageAndFree(cmd)
+    usagePer, availablePer, used, avail, dev, path = getUsageAndFree(cmd, lvm)
     return usagePer, availablePer, dev, path
 
 
@@ -49,13 +67,20 @@ parser.add_option('-c', '--critical', action='store', type='int',
                   dest='crit', help='Critical count in %', default=10)
 parser.add_option('-p', '--path', action='append', type='string',
                   dest='mountPath', help='Mount path')
+parser.add_option('-l', '--lvm', action="store_true",
+                  dest='lvm', help='List only lvm disks', default=False)
 
 (options, args) = parser.parse_args()
+if options.lvm:
+    searchQuery = "/dev/mapper"
+else:
+    searchQuery = "/"
+
 if not options.mountPath:
     options.mountPath = []
     f = open("/etc/mtab")
     for i in f.readlines():
-        if i.startswith("/"):
+        if i.startswith(searchQuery):
             options.mountPath.append(i.split()[0])
     f.close()
 
@@ -72,13 +97,12 @@ critList = []
 diskList = []
 level = -1
 for path in options.mountPath:
-    diskUsage, diskFree, used, avail, dev, mpath = getDisk(path)
-    inodeUsage, inodeFree, idev, ipath = getInode(path)
-    disk.append("%s=%.2f;%s;%s;0;100 %s=%.2f;%s;%s;0;100" % (path, diskUsage,
-                                                             warn, crit, path,
+    diskUsage, diskFree, used, avail, dev, mpath = getDisk(path, options.lvm)
+    inodeUsage, inodeFree, idev, ipath = getInode(path, options.lvm)
+    disk.append("%s=%.2f;%s;%s;0;100 %s=%.2f;%s;%s;0;100" % (dev, diskUsage,
+                                                             warn, crit, idev,
                                                              inodeUsage, warn,
                                                              crit))
-    #status.append(" %s %s(Used %s)" % (path, used, avail))
 
     if diskUsage >= crit or inodeUsage >= crit:
         if diskUsage >= crit:
@@ -97,7 +121,6 @@ for path in options.mountPath:
             level = 1
     else:
         diskList.append("%s:%s" % (dev, mpath))
-    #    okList.append("ok:disk:%s;%s;%s" % (dev, mpath, diskUsage))
 
 msg = " ".join(critList + warnList)
 if not msg:

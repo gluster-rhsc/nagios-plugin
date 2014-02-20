@@ -1,21 +1,21 @@
 #!/usr/bin/python
 # sadf.py -- nagios plugin uses sadf output for perf data
 # Copyright (C) 2014 Red Hat Inc
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
-# 
+#
 
 import os
 import sys
@@ -114,10 +114,53 @@ def getLatestSadfNetStat():
 def getLatestSadfSwapStat():
     return _getLatestStat(_sadfExecCmd(_sadfSwapSpaceCommand))
 
+
 def to_gb(value):
     result = float(value) / (1024*1024)
-    res =math.ceil(result * 100)/100
+    res = math.ceil(result * 100)/100
     return str(res)
+
+
+def showCpuStat(warnLevel, critLevel):
+    s = getLatestSadfCpuStat()
+    if not s:
+        sys.stdout.write("CPU UNKNOWN\n")
+        sys.exit(3)
+    perfLines = []
+    idleCpu = 0
+    for cpu in s['cpu-load']:
+        if cpu['cpu'] == 'all':
+            idleCpu = cpu['idle']
+        perfLines.append(
+            ("cpu_%s_total=%s;%s;%s cpu_%s_system=%s "
+             "cpu_%s_user=%s cpu_%s_idle=%s" % (cpu['cpu'], 100-cpu['idle'],
+                                                warnLevel, critLevel,
+                                                cpu['cpu'], cpu['system'],
+                                                cpu['cpu'], cpu['user'],
+                                                cpu['cpu'], cpu['idle'])))
+
+    totalCpuUsage = 100 - idleCpu
+    if totalCpuUsage > critLevel:
+        sys.stdout.write(
+            ("CPU Status CRITICAL: Total CPU:%s%% Idle CPU:%s%% "
+             "| num_of_cpu=%s %s\n" % (totalCpuUsage, idleCpu,
+                                       len(s['cpu-load'])-1,
+                                       " ".join(perfLines))))
+    elif totalCpuUsage > warnLevel:
+        sys.stdout.write(
+            ("CPU Status WARNING: Total CPU:%s%% Idle CPU:%s%% "
+             "| num_of_cpu=%s %s\n" % (totalCpuUsage, idleCpu,
+                                       len(s['cpu-load'])-1,
+                                       " ".join(perfLines))))
+    else:
+        sys.stdout.write(
+            ("CPU Status OK: Total CPU:%s%% Idle CPU:%s%% "
+             "| num_of_cpu=%s %s\n" % (totalCpuUsage, idleCpu,
+                                       len(s['cpu-load'])-1,
+                                       " ".join(perfLines))))
+
+    sys.exit(0)
+
 
 def showSwapStat(warning, critical):
     s = getLatestSadfSwapStat()
@@ -174,7 +217,6 @@ def showMemStat(warning, critical):
     sys.exit(eStat)
 
 
-
 def showNetStat():
     s = getLatestSadfNetStat()
     if not s:
@@ -197,26 +239,24 @@ def showNetStat():
 
 
 def showUsage():
-    usage = "usage: %s <net>|<mem> <warning> <critical>|<cpu> <warning> <critical>|<swap> <warning> <critical> \n warning must be less than critical" % os.path.basename(sys.argv[0])
+    usage = ("usage: %s <net>|<mem> <warning> <critical>|<cpu> <warning> "
+             "<critical>|<swap> <warning> <critical>\n Warning value should "
+             "be less than critical value" % os.path.basename(sys.argv[0]))
     sys.stderr.write(usage)
 
 
 if __name__ == '__main__':
     type = sys.argv[1]
-    if (type.upper == "NET" and len(sys.argv) != 2) or len(sys.argv) < 2:
-        showUsage()
-        sys.exit(-1)
 
-    
     if type.upper() == "NET":
         showNetStat()
     else:
-        if len(sys.argv) != 4 or sys.argv[2] > sys.argv[3] :
+        if len(sys.argv) != 4 or sys.argv[2] > sys.argv[3]:
             showUsage()
             sys.exit(-1)
         if type.upper() == "MEM":
-            showMemStat(int(sys.argv[2]),int(sys.argv[3]))
+            showMemStat(int(sys.argv[2]), int(sys.argv[3]))
         if type.upper() == "SWAP":
-            showSwapStat(int(sys.argv[2]),int(sys.argv[3]))
+            showSwapStat(int(sys.argv[2]), int(sys.argv[3]))
         if type.upper() == "CPU":
-            showCpuStat(sys.argv[2],sys.argv[3])        
+            showCpuStat(float(sys.argv[2]), float(sys.argv[3]))

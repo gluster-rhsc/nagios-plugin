@@ -178,13 +178,15 @@ def showSwapStat(warning, critical):
         eStat = 1
     else:
         sys.stdout.write("OK")
-        eStat = 0    
-    sys.stdout.write("- %.2f%% used(%sGB out of %sGB)|Used=%sGB;%s;%s;0;%s\n" % (s['memory']['swpused-percent'],
-                                                                               to_gb(s['memory']['swpused']),
-                                                                               to_gb(totalSwap),to_gb(s['memory']['swpused']),
-                                                                               to_gb(war_value),
-                                                                               to_gb(crit_value),
-                                                                               to_gb(totalSwap)))
+        eStat = 0
+    sys.stdout.write("- %.2f%% used(%sGB out of %sGB)|Used=%sGB;%s;"
+                     "%s;0;%s\n" % (s['memory']['swpused-percent'],
+                                    to_gb(s['memory']['swpused']),
+                                    to_gb(totalSwap),
+                                    to_gb(s['memory']['swpused']),
+                                    to_gb(war_value),
+                                    to_gb(crit_value),
+                                    to_gb(totalSwap)))
     sys.exit(eStat)
 
 
@@ -204,16 +206,19 @@ def showMemStat(warning, critical):
         eStat = 1
     else:
         sys.stdout.write("OK")
-        eStat = 0    
-    sys.stdout.write("- %.2f%% used(%sGB out of %sGB)|Total=%sGB;%s;%s;0;%s Used=%sGB Buffered=%sGB Cached=%sGB\n" % (s['memory']['memused-percent'],
-                                                                                                                to_gb(s['memory']['memused']),
-                                                                                                                to_gb(totalMem),to_gb(totalMem),
-                                                                                                                to_gb(war_value),
-                                                                                                                to_gb(crit_value),
-                                                                                                                to_gb(totalMem),
-                                                                                                                to_gb(s['memory']['memused']),
-                                                                                                                to_gb(s['memory']['buffers']),
-                                                                                                                to_gb(s['memory']['cached'])))
+        eStat = 0
+    sys.stdout.write("- %.2f%% used(%sGB out of %sGB)|Total=%sGB;%s;%s;0;%s"
+                     "Used=%sGB Buffered=%sGB"
+                     " Cached=%sGB\n" % (s['memory']['memused-percent'],
+                                         to_gb(s['memory']['memused']),
+                                         to_gb(totalMem),
+                                         to_gb(totalMem),
+                                         to_gb(war_value),
+                                         to_gb(crit_value),
+                                         to_gb(totalMem),
+                                         to_gb(s['memory']['memused']),
+                                         to_gb(s['memory']['buffers']),
+                                         to_gb(s['memory']['cached'])))
     sys.exit(eStat)
 
 

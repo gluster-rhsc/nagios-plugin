@@ -32,9 +32,6 @@ details and configure nrpe to work with nagios server.
 
 %install
 mkdir -p %{buildroot}/usr/lib64/nagios/plugins/gluster
-cp check_cpu_multicore.py %{buildroot}/usr/lib64/nagios/plugins/gluster
-cp check_memory.py %{buildroot}/usr/lib64/nagios/plugins/gluster
-cp check_swap_usage.py %{buildroot}/usr/lib64/nagios/plugins/gluster
 cp sadf.py %{buildroot}/usr/lib64/nagios/plugins/gluster
 cp check_disk_and_inode.py %{buildroot}/usr/lib64/nagios/plugins/gluster
 
@@ -46,9 +43,9 @@ if [ $1 == 1 ]; then
 cat >> /etc/nagios/nrpe.cfg <<EOF
 ### gluster nrpe plugins ###
 command[check_disk_and_inode]=/usr/lib64/nagios/plugins/gluster/check_disk_and_inode.py -w 20 -c 10
-command[check_memory]=/usr/lib64/nagios/plugins/gluster/check_memory.py -w 70 -c 85
-command[check_swap_usage]=/usr/lib64/nagios/plugins/gluster/check_swap_usage.py -w 30 -c 15
-command[check_cpu_multicore]=/usr/lib64/nagios/plugins/gluster/check_cpu_multicore.py -w 80 -c 90
+command[check_memory]=/usr/lib64/nagios/plugins/gluster/sadf.py mem 70 85
+command[check_swap_usage]=/usr/lib64/nagios/plugins/gluster/sadf.py swap 80 90
+command[check_cpu_multicore]=/usr/lib64/nagios/plugins/gluster/sadf.py cpu 80 90
 command[check_interfaces]=/usr/lib64/nagios/plugins/gluster/sadf.py net
 EOF
 fi
@@ -68,10 +65,6 @@ fi
 %files
 %defattr(-,root,root,-)
 /usr/lib64/nagios/plugins/gluster/check_disk_and_inode.py
-/usr/lib64/nagios/plugins/gluster/check_cpu_multicore.py
-/usr/lib64/nagios/plugins/gluster/check_disk_and_inode.py
-/usr/lib64/nagios/plugins/gluster/check_memory.py
-/usr/lib64/nagios/plugins/gluster/check_swap_usage.py
 /usr/lib64/nagios/plugins/gluster/sadf.py
 
 

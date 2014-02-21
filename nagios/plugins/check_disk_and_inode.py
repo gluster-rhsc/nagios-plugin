@@ -30,7 +30,7 @@ def getUsageAndFree(command, lvm):
     usagePer = status[-2]
     usedSpace = status[-3]
     availSpace = status[-4]
-    device = status[-6]
+    device = status[-6].split("-")[-1]
     dmatch = re.compile('[0-9]+').match(usagePer)
     if (dmatch):
         usage = eval(dmatch.group(0))

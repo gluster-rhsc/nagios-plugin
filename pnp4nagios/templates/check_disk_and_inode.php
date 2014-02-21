@@ -24,29 +24,31 @@ $i = 0;
 $k = 0;
 foreach ($this->DS as $KEY=>$VAL) {
   if ($i == 0) {
-    $ds_name[$KEY] = str_replace("_","/",$VAL['NAME']);
+    # $ds_name[$KEY] = str_replace("_","/",$VAL['NAME']);
+    $ds_name[$KEY] = $VAL['NAME'];
     # set graph labels
-    $opt[$KEY]     = "--lower-limit 0 --upper-limit 100 --title \"Logical Volume: $ds_name[$KEY]\" ";
+    $opt[$KEY]     = "--vertical-label % --lower-limit 0 --upper-limit 100 --title \"Logical Volume: $ds_name[$KEY]\" ";
     # Graph Definitions
     $def[$KEY]     = rrd::def( "var1", $VAL['RRDFILE'], $VAL['DS'], "AVERAGE" ); 
 
     # create warning line and legend
     if ($VAL['WARN'] != "") {
-      $def[$KEY] .= rrd::hrule( $VAL['WARN'], "#FFA500", "Warning Level \\n");
+      $def[$KEY] .= rrd::line2( $VAL['WARN'], "#FFA500", "Warning Level \\n");
     }
     # create critical line and legend
     if ($VAL['CRIT'] != "") {
-      $def[$KEY] .= rrd::hrule( $VAL['CRIT'], "#FF0000", "Critical Level\\n");
+      $def[$KEY] .= rrd::line2( $VAL['CRIT'], "#FF0000", "Critical Level\\n");
     }
 
-  # disk graph rendering
-  if ($VAL['ACT'] >= $VAL['CRIT']) {
-    $def[$KEY]    .= rrd::line1( "var1", "#000000", "Disk Usage\\n" );
-  } elseif ($VAL['ACT'] >= $VAL['WARN']) {
-    $def[$KEY]    .= rrd::line1( "var1", "#000000", "Disk Usage\\n" );
-  }else {
-    $def[$KEY]    .= rrd::line1( "var1", "#000000", "Disk Usage\\n" );
-  }
+    # disk graph rendering
+    if ($VAL['ACT'] >= $VAL['CRIT']) {
+     $def[$KEY]    .= rrd::line2( "var1", "#000000", "Disk Usage\\n" );
+    } elseif ($VAL['ACT'] >= $VAL['WARN']) {
+      $def[$KEY]    .= rrd::line2( "var1", "#000000", "Disk Usage\\n" );
+    }else {
+      $def[$KEY]    .= rrd::line2( "var1", "#000000", "Disk Usage " );
+    }
+    $def[$KEY] .= rrd::gprint  ("var1", array("LAST","MAX","AVERAGE"), "%3.4lf %S%%");
     $i = 1;
     $k = $KEY;
   }
@@ -54,12 +56,13 @@ foreach ($this->DS as $KEY=>$VAL) {
     # inode graph rendering
     $def[$k]    .= rrd::def( "var2", $VAL['RRDFILE'], $VAL['DS'], "AVERAGE" );
     if ($VAL['ACT'] >= $VAL['CRIT']) {
-      $def[$k]    .= rrd::line1( "var2", "#0000FF", "Inode Usage\\n" );
+      $def[$k]    .= rrd::line2( "var2", "#0000FF", "Inode Usage\\n" );
     } elseif ($VAL['ACT'] >= $VAL['WARN']) {
-      $def[$k]    .= rrd::line1( "var2", "#0000FF", "Inode Usage\\n" );
+      $def[$k]    .= rrd::line2( "var2", "#0000FF", "Inode Usage\\n" );
     }else {
-      $def[$k]    .= rrd::line1( "var2", "#0000FF", "Inode Usage\\n" );
+      $def[$k]    .= rrd::line2( "var2", "#0000FF", "Inode Usage " );
     }
+    $def[$k] .= rrd::gprint  ("var2", array("LAST","MAX","AVERAGE"), "%3.4lf %S%%");
     $i = 0;
   }
 }

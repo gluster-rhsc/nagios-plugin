@@ -81,35 +81,35 @@ if ! grep -q "#gluster nagios template" $ServicesFile; then
    cat << EOF > $ServicesFile
 #gluster nagios template
 define service{
-use generic-service,srv-pnp
+use generic-service
 hostgroup_name  gluster_hosts
 service_description Check Memory
 normal_check_interval 1
 check_command check_nrpe!check_memory
 }
 define service{
-use generic-service,srv-pnp
+use generic-service
 hostgroup_name  gluster_hosts
 service_description Check Swap Usage
 normal_check_interval 1
 check_command check_nrpe!check_swap_usage
 }
 define service{
-use generic-service,srv-pnp
+use generic-service
 hostgroup_name  gluster_hosts
 normal_check_interval 1
 service_description Check Disk
 check_command check_nrpe!check_disk_and_inode
 }
 define service{
-use generic-service,srv-pnp
+use generic-service
 hostgroup_name  gluster_hosts
 service_description Check Cpu
 normal_check_interval 1
 check_command check_nrpe!check_cpu_multicore
 }
 define service{
-use generic-service,srv-pnp
+use generic-service
 hostgroup_name  gluster_hosts
 service_description Check network
 normal_check_interval 1
@@ -124,10 +124,9 @@ service_perfdata_command=process-service-perfdata
 host_perfdata_command=process-host-perfdata
 EOF
 
-TemplatesCfgFile="/etc/nagios/objects/templates.cfg"
+TemplateCFGFile="/etc/nagios/objects/templates.cfg"
 
-
-cat >> $TemplatesCfgFile <<EOF
+cat >> $TemplatesCFGFile <<EOF
 
 define host {
    name       host-pnp

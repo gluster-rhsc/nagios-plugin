@@ -126,18 +126,17 @@ EOF
 
 TemplatesCfgFile="/etc/nagios/objects/templates.cfg"
 
-
 cat >> $TemplatesCfgFile <<EOF
 
 define host {
    name       host-pnp
-   action_url /pnp4nagios/index.php/graph?host=$HOSTNAME$&srv=_HOST_
+   action_url /pnp4nagios/index.php/graph?host=\$HOSTNAME\$&srv=_HOST_
    register   0
 }
 
 define service {
    name       srv-pnp
-   action_url /pnp4nagios/index.php/graph?host=$HOSTNAME$&srv=$SERVICEDESC$
+   action_url /pnp4nagios/index.php/graph?host=\$HOSTNAME\$&srv=\$SERVICEDESC\$
    register   0
 }
 EOF

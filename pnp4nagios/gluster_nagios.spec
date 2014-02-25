@@ -83,14 +83,14 @@ if ! grep -q "#gluster nagios template" $ServicesFile; then
 define service{
 use generic-service,srv-pnp
 hostgroup_name  gluster_hosts
-service_description Check Memory
+service_description Memory Utilization
 normal_check_interval 1
 check_command check_nrpe!check_memory
 }
 define service{
 use generic-service,srv-pnp
 hostgroup_name  gluster_hosts
-service_description Check Swap Usage
+service_description Swap Utilization
 normal_check_interval 1
 check_command check_nrpe!check_swap_usage
 }
@@ -98,20 +98,20 @@ define service{
 use generic-service,srv-pnp
 hostgroup_name  gluster_hosts
 normal_check_interval 1
-service_description Check Disk
+service_description Disk Utilization
 check_command check_nrpe!check_disk_and_inode
 }
 define service{
 use generic-service,srv-pnp
 hostgroup_name  gluster_hosts
-service_description Check Cpu
+service_description Cpu Utilization
 normal_check_interval 1
 check_command check_nrpe!check_cpu_multicore
 }
 define service{
 use generic-service,srv-pnp
 hostgroup_name  gluster_hosts
-service_description Check network
+service_description Network Utilization
 normal_check_interval 1
 check_command check_nrpe!check_interfaces
 }

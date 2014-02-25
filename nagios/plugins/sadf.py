@@ -235,11 +235,11 @@ def showNetStat():
         if dev['iface'] == "lo":
             continue
         devNames.append(dev['iface'])
-        perfLines.append("%s.rxpck=%s %s.txpck=%s %s.rxMB=%6.4f %s.txMB=%6.4f" %
+        perfLines.append("%s.rxpck=%s %s.txpck=%s %s.rxkB=%6.4f %s.txkB=%6.4f" %
                          (dev['iface'], dev['rxpck'],
                           dev['iface'], dev['txpck'],
-                          dev['iface'], (int(dev['rxkB'])/1024.0),
-                          dev['iface'], (int(dev['txkB'])/1024.0)))
+                          dev['iface'], dev['rxkB'],
+                          dev['iface'], dev['txkB']))
 
     sys.stdout.write("IFACE OK: %s |%s\n" % (", ".join(devNames),
                                              " ".join(perfLines)))

@@ -42,8 +42,8 @@ rm -rf %{buildroot}
 if [ $1 == 1 ]; then
 cat >> /etc/nagios/nrpe.cfg <<EOF
 ### gluster nrpe plugins ###
-command[check_disk_and_inode]=/usr/lib64/nagios/plugins/gluster/check_disk_and_inode.py -w 20 -c 10
-command[check_memory]=/usr/lib64/nagios/plugins/gluster/sadf.py mem 70 85
+command[check_disk_and_inode]=/usr/lib64/nagios/plugins/gluster/check_disk_and_inode.py -w 20 -c 10 -l
+command[check_memory]=/usr/lib64/nagios/plugins/gluster/sadf.py mem 80 90
 command[check_swap_usage]=/usr/lib64/nagios/plugins/gluster/sadf.py swap 80 90
 command[check_cpu_multicore]=/usr/lib64/nagios/plugins/gluster/sadf.py cpu 80 90
 command[check_interfaces]=/usr/lib64/nagios/plugins/gluster/sadf.py net

@@ -232,12 +232,14 @@ def showNetStat():
     devNames = []
     perfLines = []
     for dev in s['network']['net-dev']:
+        if dev['iface'] == "lo":
+            continue
         devNames.append(dev['iface'])
-        perfLines.append("%s.rxpck=%s %s.txpck=%s %s.rxkB=%s %s.txkB=%s" %
+        perfLines.append("%s.rxpck=%s %s.txpck=%s %s.rxMB=%6.4f %s.txMB=%6.4f" %
                          (dev['iface'], dev['rxpck'],
                           dev['iface'], dev['txpck'],
-                          dev['iface'], dev['rxkB'],
-                          dev['iface'], dev['txkB']))
+                          dev['iface'], (int(dev['rxkB'])/1024.0),
+                          dev['iface'], (int(dev['txkB'])/1024.0)))
 
     sys.stdout.write("IFACE OK: %s |%s\n" % (", ".join(devNames),
                                              " ".join(perfLines)))

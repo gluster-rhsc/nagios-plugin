@@ -1,4 +1,4 @@
-<?php
+B1;3406;0cB1;3406;0c<?php
 #
 # check_interfaces -- template to generate RRD graph
 # Copyright (C) 2014 Red Hat Inc
@@ -33,17 +33,19 @@ for ($i = 0; $i < $interface_count; $i++) {
     $index = ($i * $VALUE_COUNT) + 1;
 
     list ($interface, $data_type) = explode (".", $name[$index+2]);
-    $opt[$index+1] = "--vertical-label Load -l0  --title \"Network Interface Load for $hostname / $interface\" ";
-    $ds_name[$index+1] = "$interface:: $data_type and ";
+    $interface = str_replace(";","",$interface);
+    $opt[$index+1] = "--vertical-label \"Speed in MB/s\" -X 0 -l 0 -u 128  -r --title \"Network Interface Load for $hostname / $interface\" ";
 
+    $ds_name[$index+1] = "$interface:: Receiving and ";
     $def[$index+1]  = rrd::def ($interface . $data_type, $RRDFILE[$index+2], $DS[$index+2], "AVERAGE");
-    $def[$index+1] .= rrd::area ($interface . $data_type, "#ADD8E6", $data_type);
-    $def[$index+1] .= rrd::gprint ($interface . $data_type, array("LAST", "AVERAGE", "MAX"), "%6.2lf");
+    $def[$index+1] .= rrd::line1($interface . $data_type, "#008000", $data_type);
+    $def[$index+1] .= rrd::gprint ($interface . $data_type, array("LAST", "AVERAGE", "MAX"), "%10.4lf MB/s");
 
     list ($interface, $data_type) = explode (".", $name[$index+3]);
-    $ds_name[$index+1] .= "$data_type";
+    $interface = str_replace(";","",$interface);
+    $ds_name[$index+1] .= "Transmission speed";
     $def[$index+1] .= rrd::def ($interface . $data_type, $RRDFILE[$index+3], $DS[$index+3], "AVERAGE");
-    $def[$index+1] .= rrd::area ($interface . $data_type, "#6CBB3C", $data_type) ;
-    $def[$index+1] .= rrd::gprint ($interface . $data_type, array("LAST", "AVERAGE", "MAX"), "%6.2lf");
+    $def[$index+1] .= rrd::line1 ($interface . $data_type, "#0000ff", $data_type) ;
+    $def[$index+1] .= rrd::gprint ($interface . $data_type, array("LAST", "AVERAGE", "MAX"), "%10.4lf MB/s");
 }
 ?>

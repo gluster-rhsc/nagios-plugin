@@ -209,7 +209,7 @@ def showMemStat(warning, critical):
         sys.stdout.write("OK")
         eStat = 0
     sys.stdout.write("- %.2f%% used(%sGB out of %sGB)|Total=%sGB;%s;%s;0;%s"
-                     "Used=%sGB Buffered=%sGB"
+                     " Used=%sGB Buffered=%sGB"
                      " Cached=%sGB\n" % (s['memory']['memused-percent'],
                                          to_gb(s['memory']['memused']),
                                          to_gb(totalMem),

@@ -1,4 +1,4 @@
-B1;3406;0cB1;3406;0c<?php
+<?php
 #
 # check_interfaces -- template to generate RRD graph
 # Copyright (C) 2014 Red Hat Inc
@@ -34,18 +34,20 @@ for ($i = 0; $i < $interface_count; $i++) {
 
     list ($interface, $data_type) = explode (".", $name[$index+2]);
     $interface = str_replace(";","",$interface);
-    $opt[$index+1] = "--vertical-label \"Speed in MB/s\" -X 0 -l 0 -u 128  -r --title \"Network Interface Load for $hostname / $interface\" ";
+    $opt[$index+1] = "--vertical-label \"Speed in MB/s\" -X 0 -l 0 -u 1  -r --title \"Network Interface Load for $hostname / $interface\" ";
 
     $ds_name[$index+1] = "$interface:: Receiving and ";
-    $def[$index+1]  = rrd::def ($interface . $data_type, $RRDFILE[$index+2], $DS[$index+2], "AVERAGE");
-    $def[$index+1] .= rrd::line1($interface . $data_type, "#008000", $data_type);
-    $def[$index+1] .= rrd::gprint ($interface . $data_type, array("LAST", "AVERAGE", "MAX"), "%10.4lf MB/s");
-
+    $def[$index+1]  = rrd::def("value1", $RRDFILE[$index+2], $DS[$index+2], "AVERAGE");
+    $def[$index+1]  .= rrd::cdef ("value2","value1,1024,/");
+    $def[$index+1] .= rrd::line1("value2", "#008000", $data_type);
+    $def[$index+1] .= rrd::gprint ("value2", array("LAST", "AVERAGE", "MAX"), "%10.4lf MB/s");
+    
     list ($interface, $data_type) = explode (".", $name[$index+3]);
     $interface = str_replace(";","",$interface);
     $ds_name[$index+1] .= "Transmission speed";
-    $def[$index+1] .= rrd::def ($interface . $data_type, $RRDFILE[$index+3], $DS[$index+3], "AVERAGE");
-    $def[$index+1] .= rrd::line1 ($interface . $data_type, "#0000ff", $data_type) ;
-    $def[$index+1] .= rrd::gprint ($interface . $data_type, array("LAST", "AVERAGE", "MAX"), "%10.4lf MB/s");
-}
+    $def[$index+1] .= rrd::def ("value3", $RRDFILE[$index+3], $DS[$index+3], "AVERAGE");
+    $def[$index+1] .= rrd::cdef ("value4","value3,1024,/");
+    $def[$index+1] .= rrd::line1 ("value4", "#0000ff", $data_type) ;
+    $def[$index+1] .= rrd::gprint ("value4", array("LAST", "AVERAGE", "MAX"), "%10.4lf MB/s");
+    }
 ?>

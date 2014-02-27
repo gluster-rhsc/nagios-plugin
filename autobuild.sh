@@ -63,11 +63,11 @@ echo "check_interfaces.php"
 echo "check_memory.php"
 echo "check_swap_usage.php"
 
-cp -a pnp4nagios/templates/check_cpu_multicore.php gluster-nagios-1.1
-cp -a pnp4nagios/templates/check_disk_and_inode.php gluster-nagios-1.1
-cp -a pnp4nagios/templates/check_interfaces.php gluster-nagios-1.1
-cp -a pnp4nagios/templates/check_memory.php gluster-nagios-1.1
-cp -a pnp4nagios/templates/check_swap_usage.php gluster-nagios-1.1
+cp -a server/pnp4nagios/templates/check_cpu_multicore.php gluster-nagios-1.1
+cp -a server/pnp4nagios/templates/check_disk_and_inode.php gluster-nagios-1.1
+cp -a server/pnp4nagios/templates/check_interfaces.php gluster-nagios-1.1
+cp -a server/pnp4nagios/templates/check_memory.php gluster-nagios-1.1
+cp -a server/pnp4nagios/templates/check_swap_usage.php gluster-nagios-1.1
 
 tar -czf gluster-nagios-1.1.tar.gz gluster-nagios-1.1
 

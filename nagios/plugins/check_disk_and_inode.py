@@ -88,8 +88,8 @@ if not options.mountPath:
     parser.print_help()
     sys.exit(1)
 
-crit = 100 - options.crit
-warn = 100 - options.warn
+crit = options.crit
+warn = options.warn
 
 disk = []
 warnList = []

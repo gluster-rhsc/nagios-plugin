@@ -31,6 +31,7 @@ import sys
 import shlex
 import subprocess
 import socket
+import getopt
 
 STATUS_OK = 0
 STATUS_WARNING = 1
@@ -118,18 +119,33 @@ def checkLiveStatus(hostAddr, srvc):
 
 # Method to show the usage
 def showUsage():
-    usage = "Usage: %s <Host Address>\n" % os.path.basename(sys.argv[0])
+    usage = "Usage: %s -H <Host Address>\n" % os.path.basename(sys.argv[0])
     sys.stderr.write(usage)
 
 
 # Main method
 if __name__ == "__main__":
-    # Check the command line parameters
-    if len(sys.argv) != 2 or len(sys.argv) < 2:
+    try :
+        opts, args = getopt.getopt(sys.argv[1:], "hH:")
+    except getopt.GetoptError as e:
+        print (str(e))
         showUsage()
-        sys.exit(-1)
+        sys.exit(STATUS_CRITICAL)
 
-    hostAddr = sys.argv[1]
+    hostAddr = ''
+    if len(opts) == 0:
+        showUsage()
+        sys.exit(STATUS_CRITICAL)
+    else:
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                showUsage()
+                sys.exit(STATUS_CRITICAL)
+            elif opt in ("-H", "--host"):
+                hostAddr = arg
+            else:
+                showUsage()
+                sys.exit(STATUS_CRITICAL)
 
     # Check ping status of the node, if its not reachable exit
     pingStatus = getPingStatus(hostAddr)

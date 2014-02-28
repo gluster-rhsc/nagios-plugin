@@ -25,6 +25,7 @@ import os
 import sys
 import datetime
 import socket
+import getopt
 
 STATUS_OK = "OK"
 STATUS_WARNING = "WARNING"
@@ -39,7 +40,7 @@ _socketPath='/var/spool/nagios/cmd/live'
 
 # Shows the usage of the script
 def showUsage():
-    usage = "Usage: %s <Service State (OK/WARNING/CRITICAL/UNKNOWN)> <Service State Type (SOFT/HARD)> <No of Service attempts> <Host Address> <Service Description>\n" % os.path.basename(sys.argv[0])
+    usage = "Usage: %s -s <Service State (OK/WARNING/CRITICAL/UNKNOWN)> -t <Service State Type (SOFT/HARD)> -a <No of Service attempts> -l <Host Address> -n <Service Name>\n" % os.path.basename(sys.argv[0])
     sys.stderr.write(usage)
 
 
@@ -89,20 +90,38 @@ def check_and_update_host_state_to_up(hostAddr, srvcName):
 
 # Main method
 if __name__ == "__main__":
-    # Check the command line arguments
-    if len(sys.argv) < 6:
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hs:t:a:l:n:")
+    except getopt.GetoptError as e:
+        print (str(e))
         showUsage()
-        sys.exit(-1)
+        sys.exit(STATUS_CRITICAL)
 
-    srvcState = sys.argv[1]
-    srvcStateType = sys.argv[2]
-    attempts = sys.argv[3]
-    hostAddr = sys.argv[4]
-    # Service description might contain spaces
+    srvcState = ''
+    srvcStateType = ''
+    attempts = ''
+    hostAddr = ''
     srvcName = ''
-    for count in range(5, len(sys.argv)):
-        srvcName += sys.argv[count] + ' '
-    srvcName = srvcName.strip()
+    if len(opts) == 0:
+        showUsage()
+    else:
+        for opt, arg in opts:
+            if opt in ('-h', '--help'):
+                showUsage()
+                sys.exit()
+            elif opt in ('-s', '--state'):
+                srvcState = arg
+            elif opt in ('-t', '--type'):
+                srvcStateType = arg
+            elif opt in ('-a', '--attempts'):
+                attempts = arg
+            elif opt in ('-l', '--location'):
+                hostAddr = arg
+            elif opt in ('-n', '--name'):
+                srvcName = arg
+            else:
+                showUsage()
+                sys.exit()
 
     # Swicth over the service state values and do the needful
     if srvcState == STATUS_CRITICAL:

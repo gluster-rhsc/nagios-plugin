@@ -126,8 +126,9 @@ EOF
 
 TemplatesCfgFile="/etc/nagios/objects/templates.cfg"
 
+if ! grep -q "graph icon template" $TemplatesCfgFile; then
 cat >> $TemplatesCfgFile <<EOF
-
+### graph icon template ###
 define host {
    name       host-pnp
    action_url /pnp4nagios/index.php/graph?host=\$HOSTNAME\$&srv=_HOST_
@@ -140,6 +141,7 @@ define service {
    register   0
 }
 EOF
+fi
 
 CommandFile="/etc/nagios/objects/commands.cfg"
 if [ -f $CommandFile ]; then

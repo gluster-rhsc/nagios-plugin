@@ -74,7 +74,7 @@ def checkLiveStatus(hostAddr, srvc):
     if len(table) > 0 and len(table[0]) > 0:
         return int(table[0][0])
     else:
-        return STATUS_UNKNOWN
+        return statusCodes[STATUS_UNKNOWN]
 
 
 # Method to change the host state to UP based on other service type status
@@ -91,7 +91,7 @@ def check_and_update_host_state_to_up(hostAddr, srvcName):
 # Main method
 if __name__ == "__main__":
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hs:t:a:l:n:")
+        opts, args = getopt.getopt(sys.argv[1:], "hs:t:a:l:n:", ["help", "state=", "type=", "attempts=", "location=", "name="])
     except getopt.GetoptError as e:
         print (str(e))
         showUsage()

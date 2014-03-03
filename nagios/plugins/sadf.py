@@ -24,7 +24,7 @@ import subprocess
 import json
 import datetime
 import math
-
+import argparse
 _twoMinutes = datetime.timedelta(minutes=2)
 _sadfCpuCommand = "sadf -j -- -P ALL"
 _sadfMemoryCommand = "sadf -j -- -r"
@@ -115,12 +115,6 @@ def getLatestSadfSwapStat():
     return _getLatestStat(_sadfExecCmd(_sadfSwapSpaceCommand))
 
 
-def to_gb(value):
-    result = float(value) / (1024*1024)
-    res = math.ceil(result * 100)/100
-    return str(res)
-
-
 def showCpuStat(warnLevel, critLevel):
     s = getLatestSadfCpuStat()
     if not s:
@@ -134,12 +128,13 @@ def showCpuStat(warnLevel, critLevel):
         perfLines.append(
             ("cpu_%s_total=%s%%;%s;%s cpu_%s_system=%s%% "
              "cpu_%s_user=%s%% cpu_%s_idle=%s%%" % (
-                    cpu['cpu'], 100-cpu['idle'],
-                    warnLevel, critLevel,
-                    cpu['cpu'], cpu['system'],
-                    cpu['cpu'], cpu['user'],
-                    cpu['cpu'], cpu['idle'])))
-
+                 cpu['cpu'], 100-cpu['idle'],
+                 warnLevel, critLevel,
+                 cpu['cpu'], cpu['system'],
+                 cpu['cpu'], cpu['user'],
+                 cpu['cpu'], cpu['idle'])))
+        if len(s['cpu-load'])-1 == 1:
+            break
     totalCpuUsage = 100 - idleCpu
     if totalCpuUsage > critLevel:
         sys.stdout.write(
@@ -180,14 +175,14 @@ def showSwapStat(warning, critical):
     else:
         sys.stdout.write("OK")
         eStat = 0
-    sys.stdout.write("- %.2f%% used(%sGB out of %sGB)|Used=%sGB;%s;"
+    sys.stdout.write("- %.2f%% used(%skB out of %skB)|Used=%skB;%s;"
                      "%s;0;%s\n" % (s['memory']['swpused-percent'],
-                                    to_gb(s['memory']['swpused']),
-                                    to_gb(totalSwap),
-                                    to_gb(s['memory']['swpused']),
-                                    to_gb(war_value),
-                                    to_gb(crit_value),
-                                    to_gb(totalSwap)))
+                                    s['memory']['swpused'],
+                                    totalSwap,
+                                    s['memory']['swpused'],
+                                    war_value,
+                                    crit_value,
+                                    totalSwap))
     sys.exit(eStat)
 
 
@@ -196,6 +191,7 @@ def showMemStat(warning, critical):
     if not s:
         sys.stdout.write("IFACE UNKNOWN\n")
         sys.exit(3)
+    print s
     totalMem = s['memory']['memfree'] + s['memory']['memused']
     crit_value = (totalMem * critical) / 100
     war_value = (totalMem * warning) / 100
@@ -208,22 +204,22 @@ def showMemStat(warning, critical):
     else:
         sys.stdout.write("OK")
         eStat = 0
-    sys.stdout.write("- %.2f%% used(%sGB out of %sGB)|Total=%sGB;%s;%s;0;%s"
-                     " Used=%sGB Buffered=%sGB"
-                     " Cached=%sGB\n" % (s['memory']['memused-percent'],
-                                         to_gb(s['memory']['memused']),
-                                         to_gb(totalMem),
-                                         to_gb(totalMem),
-                                         to_gb(war_value),
-                                         to_gb(crit_value),
-                                         to_gb(totalMem),
-                                         to_gb(s['memory']['memused']),
-                                         to_gb(s['memory']['buffers']),
-                                         to_gb(s['memory']['cached'])))
+    sys.stdout.write("- %.2f%% used(%skB out of %skB)|Total=%skB;%s;%s;0;%s"
+                     " Used=%skB Buffered=%skB"
+                     " Cached=%skB\n" % (s['memory']['memused-percent'],
+                                         s['memory']['memused'],
+                                         totalMem,
+                                         totalMem,
+                                         war_value,
+                                         crit_value,
+                                         totalMem,
+                                         s['memory']['memused'],
+                                         s['memory']['buffers'],
+                                         s['memory']['cached']))
     sys.exit(eStat)
 
 
-def showNetStat():
+def showNetStat(iface_list=None, list_type=None):
     s = getLatestSadfNetStat()
     if not s:
         sys.stdout.write("IFACE UNKNOWN\n")
@@ -232,39 +228,75 @@ def showNetStat():
     devNames = []
     perfLines = []
     for dev in s['network']['net-dev']:
-        if dev['iface'] == "lo":
-            continue
+        if list_type == "exclude":
+            if dev['iface'] in iface_list:
+                continue
+        elif list_type == "include":
+            if dev['iface'] not in iface_list:
+                continue
         devNames.append(dev['iface'])
-        perfLines.append("%s.rxpck=%s %s.txpck=%s %s.rxkB=%6.4f %s.txkB=%6.4f" %
-                         (dev['iface'], dev['rxpck'],
-                          dev['iface'], dev['txpck'],
-                          dev['iface'], dev['rxkB'],
-                          dev['iface'], dev['txkB']))
+        perfLines.append("%s.rxpck=%s %s.txpck=%s %s.rxkB=%6.4f %s.txkB=%6.4f"
+                         % (dev['iface'], dev['rxpck'],
+                            dev['iface'], dev['txpck'],
+                            dev['iface'], dev['rxkB'],
+                            dev['iface'], dev['txkB']))
 
     sys.stdout.write("IFACE OK: %s |%s\n" % (", ".join(devNames),
                                              " ".join(perfLines)))
     sys.exit(0)
 
 
-def showUsage():
-    usage = ("usage: %s <net>|<mem> <warning> <critical>|<cpu> <warning> "
-             "<critical>|<swap> <warning> <critical>\n Warning value should "
-             "be less than critical value" % os.path.basename(sys.argv[0]))
-    sys.stderr.write(usage)
+def parse_input():
+    parser = argparse.ArgumentParser(usage='%(prog)s [-h] (\
+\n-m -w <warning> -c <critical> |\n-s -w <warning> -c <critical>\
+ |\n-cp -w <warning> -c <critical> |\n-n [-e EXCLUDE [EXCLUDE ...]\
+ | -i INCLUDE [INCLUDE ...]])')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-m', '--memory', action='store_true',
+                       help="Gives details related to memory")
+    group.add_argument('-s', '--swap', action='store_true',
+                       help="Gives details related to swap")
+    group.add_argument('-cp', '--cpu', action='store_true',
+                       help="Gives details related to cpu")
+    group.add_argument('-n', '--network', action='store_true',
+                       help="Gives details related to network")
+    parser.add_argument("-w", "--warning", action="store", type=int,
+                        help="Warning threshold in percentage")
+    parser.add_argument("-c", "--critical", action="store", type=int,
+                        help="Critical threshold in percentage")
+    parser.add_argument("-e", "--exclude", action="store", nargs='+',
+                        help="Parameters to be excluded")
+    parser.add_argument("-i", "--include", action="store", nargs='+',
+                        help="Parameters to be included")
+    args = parser.parse_args()
+    if args.memory or args.swap or args.cpu:
+        if not args.critical or not args.warning:
+            print "UNKNOWN:Missing critical/warning threshold value."
+            sys.exit(3)
+        if args.exclude or args.include:
+            print "UNKNOWN:Exclude/Include is not valid for the given option."
+            sys.exit(3)
+        if args.critical <= args.warning:
+            print "UNKNOWN:Critical must be greater than Warning."
+            sys.exit(3)
+    else:
+        if args.critical or args.warning:
+            print "UNKNOWN:Warning/Critical is not valid for the given option."
+            sys.exit(3)
+    return args
 
 
 if __name__ == '__main__':
-    type = sys.argv[1]
-
-    if type.upper() == "NET":
+    args = parse_input()
+    if args.memory:
+        showMemStat(args.warning, args.critical)
+    if args.swap:
+        showSwapStat(args.warning, args.critical)
+    if args.cpu:
+        showCpuStat(args.warning, args.critical)
+    if args.network:
+        if args.exclude:
+            showNetStat(args.exclude, "exclude")
+        if args.include:
+            showNetStat(args.include, "include")
         showNetStat()
-    else:
-        if len(sys.argv) != 4 or sys.argv[2] > sys.argv[3]:
-            showUsage()
-            sys.exit(-1)
-        if type.upper() == "MEM":
-            showMemStat(int(sys.argv[2]), int(sys.argv[3]))
-        if type.upper() == "SWAP":
-            showSwapStat(int(sys.argv[2]), int(sys.argv[3]))
-        if type.upper() == "CPU":
-            showCpuStat(float(sys.argv[2]), float(sys.argv[3]))

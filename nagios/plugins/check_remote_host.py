@@ -126,7 +126,7 @@ def showUsage():
 # Main method
 if __name__ == "__main__":
     try :
-        opts, args = getopt.getopt(sys.argv[1:], "hH:")
+        opts, args = getopt.getopt(sys.argv[1:], "hH:", ["help", "host="])
     except getopt.GetoptError as e:
         print (str(e))
         showUsage()
@@ -139,13 +139,13 @@ if __name__ == "__main__":
     else:
         for opt, arg in opts:
             if opt in ("-h", "--help"):
-                showUsage()
-                sys.exit(STATUS_CRITICAL)
+	        showUsage()
+	        sys.exit()
             elif opt in ("-H", "--host"):
-                hostAddr = arg
+	        hostAddr = arg
             else:
                 showUsage()
-                sys.exit(STATUS_CRITICAL)
+	        sys.exit(STATUS_CRITICAL)
 
     # Check ping status of the node, if its not reachable exit
     pingStatus = getPingStatus(hostAddr)

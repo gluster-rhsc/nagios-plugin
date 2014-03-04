@@ -47,7 +47,10 @@ def showUsage():
 # Method to change the host status
 def update_host_state(hostAddr, srvcName, statusCode):
     now = datetime.datetime.now()
-    cmdStr = "[%s] PROCESS_HOST_CHECK_RESULT;%s;%s;Host Status WARNING - Some of the services in CRITICAL state\n" % (now, hostAddr, statusCode)
+    if statusCode == statusCodes[STATUS_CRITICAL]:
+        cmdStr = "[%s] PROCESS_HOST_CHECK_RESULT;%s;%s;Host Status WARNING - Some of the services in CRITICAL state\n" % (now, hostAddr, statusCode)
+    else:
+        cmdStr = "[%s] PROCESS_HOST_CHECK_RESULT;%s;%s;Host Status OK - Services in good health\n" % (now, hostAddr, statusCode)
     f = open(NAGIOS_COMMAND_FILE, "w")
     f.write(cmdStr)
     f.close()
@@ -85,7 +88,7 @@ def check_and_update_host_state_to_up(hostAddr, srvcName):
             finalState = finalState | checkLiveStatus(hostAddr, item)
 
     if finalState == statusCodes[STATUS_OK]:
-        update_host_state(hostAddr, srvcName, STATUS_OK)
+        update_host_state(hostAddr, srvcName, statusCodes[STATUS_OK])
 
 
 # Main method

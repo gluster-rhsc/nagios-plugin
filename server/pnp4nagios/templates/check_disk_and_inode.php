@@ -24,11 +24,12 @@ $i = 0;
 $k = 0;
 foreach ($this->DS as $KEY=>$VAL) {
   if ($i == 0) {
-    # $ds_name[$KEY] = str_replace("_","/",$VAL['NAME']);
-    $ds_name[$KEY] = "Disk Utilization for LV:" . $VAL['NAME'];
+    $VAL['NAME'] = str_replace("_","/",$VAL['NAME']);
+    $ds_name[$KEY] = "Disk Utilization";
+    $name[$KEY] = "Disk Utilization for mount: " . $VAL['NAME'];
+     
     # set graph labels
-    $opt[$KEY]     = "--vertical-label \"% Usage\" --lower-limit 0 --upper-limit 100 --title \"Logical Volume: $ds_name[$KEY]\" ";
-    #$opt[$KEY]     = "LVM Disk Utilization";
+    $opt[$KEY]     = "--vertical-label \"% Usage\" --lower-limit 0 --upper-limit 100 --title \"$name[$KEY]\" ";
     # Graph Definitions
     $def[$KEY]     = rrd::def( "var1", $VAL['RRDFILE'], $VAL['DS'], "AVERAGE" ); 
 

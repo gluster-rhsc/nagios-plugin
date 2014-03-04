@@ -37,8 +37,7 @@ def getUsageAndFree(command, lvm):
         return (float(usage), float(100 - usage), usedSpace,
                 availSpace, device, path)
     else:
-        print "STATE UNKNOWN"
-        sys.exit(3)
+        return None, None, None, None, None, None
 
 
 def getDisk(path, readable=False, lvm=False):
@@ -73,6 +72,8 @@ parser.add_option('-l', '--lvm', action="store_true",
                   dest='lvm', help='List lvm mounts', default=False)
 parser.add_option('-a', '--all', action="store_true",
                   dest='all', help='List all mounts', default=False)
+parser.add_option('-n', '--ignore', action="store_true",
+                  dest='ignore', help='Ignore errors', default=False)
 parser.add_option('-i', '--include', action='append', type='string',
                   dest='mountPath', help='Mount path', default=[])
 parser.add_option('-x', '--exclude', action="append", type='string',
@@ -119,6 +120,7 @@ disk = []
 warnList = []
 critList = []
 diskList = []
+mounts = []
 level = -1
 
 for path in options.mountPath:
@@ -128,6 +130,15 @@ for path in options.mountPath:
     inodeUsage, inodeFree, iused, iavail, idev, ipath = getInode(path,
                                                                  options.usage,
                                                                  options.lvm)
+    if mpath in mounts:
+        continue
+    if not used or not iused:
+        if options.ignore:
+            continue
+        else:
+            sys.exit(3)
+
+    mounts.append(mpath)
     if options.usage:
         total = (float(used) + float(avail)) / 1000
         itot = (float(iused) + float(iavail)) / 1000

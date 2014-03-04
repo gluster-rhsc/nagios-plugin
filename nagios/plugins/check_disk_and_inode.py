@@ -28,8 +28,8 @@ def getUsageAndFree(command, lvm):
     status = commands.getstatusoutput(command)[1].split()
     path = status[-1]
     usagePer = status[-2]
-    usedSpace = status[-3]
-    availSpace = status[-4]
+    availSpace = status[-3]
+    usedSpace = status[-4]
     device = status[-6].split("-")[-1]
     dmatch = re.compile('[0-9]+').match(usagePer)
     if (dmatch):
@@ -41,14 +41,15 @@ def getUsageAndFree(command, lvm):
         sys.exit(3)
 
 
-def getDisk(path, lvm=False):
-    return getUsageAndFree("df -kh %s" % path, lvm)
+def getDisk(path, readable=False, lvm=False):
+    if readable:
+        return getUsageAndFree("df -m %s" % path, lvm)
+    else:
+        return getUsageAndFree("df -kh %s" % path, lvm)
 
 
-def getInode(path, lvm=False):
-    cmd = "df -i %s" % path
-    usagePer, availablePer, used, avail, dev, path = getUsageAndFree(cmd, lvm)
-    return usagePer, availablePer, dev, path
+def getInode(path, readable=False, lvm=False):
+    return getUsageAndFree("df -i %s" % path, lvm)
 
 
 def appendStatus(lst, level, typ, device, mpath, usage):
@@ -60,49 +61,82 @@ def appendStatus(lst, level, typ, device, mpath, usage):
         level = "ok"
     lst.append("%s:%s:%s;%s;%s" % (level, device, mpath, usage))
 
+
 parser = OptionParser()
 parser.add_option('-w', '--warning', action='store', type='int',
-                  dest='warn', help='Warning count in %', default=20)
+                  dest='warn', help='Warning count in %', default=80)
 parser.add_option('-c', '--critical', action='store', type='int',
-                  dest='crit', help='Critical count in %', default=10)
-parser.add_option('-p', '--path', action='append', type='string',
-                  dest='mountPath', help='Mount path')
+                  dest='crit', help='Critical count in %', default=90)
+parser.add_option('-u', '--usage', action="store_true", dest='usage',
+                  help='Output disk and inode usage', default=False)
 parser.add_option('-l', '--lvm', action="store_true",
-                  dest='lvm', help='List only lvm disks', default=False)
+                  dest='lvm', help='List lvm mounts', default=False)
+parser.add_option('-a', '--all', action="store_true",
+                  dest='all', help='List all mounts', default=False)
+parser.add_option('-i', '--include', action='append', type='string',
+                  dest='mountPath', help='Mount path', default=[])
+parser.add_option('-x', '--exclude', action="append", type='string',
+                  dest='exclude', help='Exclude disk')
 
 (options, args) = parser.parse_args()
+
+if len(args) > 2:
+    if args[0].isdigit() and args[1].isdigit():
+        warn = int(args[0])
+        crit = int(args[1])
+        options.mountPath = args[2:]
+    else:
+        warn = 80
+        crit = 90
+        options.mountPath = args
+else:
+    crit = options.crit
+    warn = options.warn
+
 if options.lvm:
     searchQuery = "/dev/mapper"
 else:
     searchQuery = "/"
 
-if not options.mountPath:
-    options.mountPath = []
+if not options.mountPath or options.lvm or options.all:
     f = open("/etc/mtab")
     for i in f.readlines():
         if i.startswith(searchQuery):
-            options.mountPath.append(i.split()[0])
+            if not options.exclude:
+                options.mountPath.append(i.split()[0])
+            else:
+                device = i.split()
+                if not device[0] in options.exclude and\
+                   not device[1] in options.exclude:
+                    options.mountPath.append(device[0])
     f.close()
 
 if not options.mountPath:
     parser.print_help()
     sys.exit(1)
 
-crit = options.crit
-warn = options.warn
-
 disk = []
 warnList = []
 critList = []
 diskList = []
 level = -1
+
 for path in options.mountPath:
-    diskUsage, diskFree, used, avail, dev, mpath = getDisk(path, options.lvm)
-    inodeUsage, inodeFree, idev, ipath = getInode(path, options.lvm)
-    disk.append("%s=%.2f;%s;%s;0;100 %s=%.2f;%s;%s;0;100" % (dev, diskUsage,
-                                                             warn, crit, idev,
-                                                             inodeUsage, warn,
-                                                             crit))
+    diskUsage, diskFree, used, avail, dev, mpath = getDisk(path,
+                                                           options.usage,
+                                                           options.lvm)
+    inodeUsage, inodeFree, iused, iavail, idev, ipath = getInode(path,
+                                                                 options.usage,
+                                                                 options.lvm)
+    if options.usage:
+        total = (float(used) + float(avail)) / 1000
+        itot = (float(iused) + float(iavail)) / 1000
+        disk.append("%s=%.1f;%.1f;%.1f;0;%.1f %s=%.1f;%.1f;%.1f;0;%.1f" % (
+            mpath, float(used)/1000, warn*total/100, crit*total/100, total,
+            ipath, float(iused)/1000, warn*itot/100, crit*itot/100, itot))
+    else:
+        disk.append("%s=%.2f;%s;%s;0;100 %s=%.2f;%s;%s;0;100" % (
+            mpath, diskUsage, warn, crit, ipath, inodeUsage, warn, crit))
 
     if diskUsage >= crit or inodeUsage >= crit:
         if diskUsage >= crit:

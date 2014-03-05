@@ -25,11 +25,13 @@ import json
 import datetime
 import math
 import argparse
+import xml.etree.ElementTree as ET
+from collections import defaultdict
 _twoMinutes = datetime.timedelta(minutes=2)
-_sadfCpuCommand = "sadf -j -- -P ALL"
-_sadfMemoryCommand = "sadf -j -- -r"
-_sadfNetworkCommand = "sadf -j -- -n DEV"
-_sadfSwapSpaceCommand = "sadf -j -- -S"
+_sadfCpuCommand = "sadf -x -- -P ALL"
+_sadfMemoryCommand = "sadf -x -- -r"
+_sadfNetworkCommand = "sadf -x -- -n DEV"
+_sadfSwapSpaceCommand = "sadf -x -- -S"
 
 
 class sadfCmdExecFailedException(Exception):
@@ -65,6 +67,27 @@ def execCmd(command):
     return (proc.returncode, out, err)
 
 
+def etree_to_dict(t):
+    d = {t.tag: {} if t.attrib else None}
+    children = list(t)
+    if children:
+        dd = defaultdict(list)
+        for dc in map(etree_to_dict, children):
+            for k, v in dc.iteritems():
+                dd[k].append(v)
+        d = {t.tag: {k:v[0] if len(v) == 1 else v for k, v in dd.iteritems()}}
+    if t.attrib:
+        d[t.tag].update((k, v) for k, v in t.attrib.iteritems())
+    if t.text:
+        text = t.text.strip()
+        if children or t.attrib:
+            if text:
+              d[t.tag]['#text'] = text
+        else:
+            d[t.tag] = text
+    return d
+
+
 def _sadfExecCmd(sadfCmd):
     now = datetime.datetime.now()
     start = (now - _twoMinutes).strftime("%H:%M:%S")
@@ -79,18 +102,21 @@ def _sadfExecCmd(sadfCmd):
     if rc != 0:
         raise sadfCmdExecFailedException(rc, [out], [err])
 
-    j = json.loads(out)
-    return j['sysstat']['hosts'][0]['statistics']
+    root = ET.fromstring(out)
+    d = etree_to_dict(root)
+    return d['sysstat']['host']['statistics']['timestamp']
 
 
 def _getLatestStat(stats):
     if not stats:
         return {}
+    if not isinstance(stats,list):
+        return stats
     lstat = stats[0]
-    latestTime = datetime.datetime.strptime(lstat['timestamp']['time'],
+    latestTime = datetime.datetime.strptime(lstat['time'],
                                             "%H:%M:%S")
     for s in stats[1:]:
-        thisTime = datetime.datetime.strptime(s['timestamp']['time'],
+        thisTime = datetime.datetime.strptime(s['time'],
                                               "%H:%M:%S")
         if latestTime < thisTime:
             lstat = s
@@ -122,37 +148,37 @@ def showCpuStat(warnLevel, critLevel):
         sys.exit(3)
     perfLines = []
     idleCpu = 0
-    for cpu in s['cpu-load']:
-        if cpu['cpu'] == 'all':
+    for cpu in s['cpu-load']['cpu']:
+        if cpu['number'] == 'all':
             idleCpu = cpu['idle']
         perfLines.append(
             ("cpu_%s_total=%s%%;%s;%s cpu_%s_system=%s%% "
              "cpu_%s_user=%s%% cpu_%s_idle=%s%%" % (
-                 cpu['cpu'], 100-cpu['idle'],
+                 cpu['number'], 100-float(cpu['idle']),
                  warnLevel, critLevel,
-                 cpu['cpu'], cpu['system'],
-                 cpu['cpu'], cpu['user'],
-                 cpu['cpu'], cpu['idle'])))
-        if len(s['cpu-load'])-1 == 1:
+                 cpu['number'], cpu['system'],
+                 cpu['number'], cpu['user'],
+                 cpu['number'], cpu['idle'])))
+        if len(s['cpu-load']['cpu'])-1 == 1:
             break
-    totalCpuUsage = 100 - idleCpu
+    totalCpuUsage = 100 - float(idleCpu)
     if totalCpuUsage > critLevel:
         sys.stdout.write(
             ("CPU Status CRITICAL: Total CPU:%s%% Idle CPU:%s%% "
              "| num_of_cpu=%s %s\n" % (totalCpuUsage, idleCpu,
-                                       len(s['cpu-load'])-1,
+                                       len(s['cpu-load']['cpu'])-1,
                                        " ".join(perfLines))))
     elif totalCpuUsage > warnLevel:
         sys.stdout.write(
             ("CPU Status WARNING: Total CPU:%s%% Idle CPU:%s%% "
              "| num_of_cpu=%s %s\n" % (totalCpuUsage, idleCpu,
-                                       len(s['cpu-load'])-1,
+                                       len(s['cpu-load']['cpu'])-1,
                                        " ".join(perfLines))))
     else:
         sys.stdout.write(
             ("CPU Status OK: Total CPU:%s%% Idle CPU:%s%% "
              "| num_of_cpu=%s %s\n" % (totalCpuUsage, idleCpu,
-                                       len(s['cpu-load'])-1,
+                                       len(s['cpu-load']['cpu'])-1,
                                        " ".join(perfLines))))
 
     sys.exit(0)
@@ -163,20 +189,20 @@ def showSwapStat(warning, critical):
     if not s:
         sys.stdout.write("IFACE UNKNOWN\n")
         sys.exit(3)
-    totalSwap = s['memory']['swpfree'] + s['memory']['swpused']
+    totalSwap = int(s['memory']['swpfree']) + int(s['memory']['swpused'])
     crit_value = (totalSwap * critical) / 100
     war_value = (totalSwap * warning) / 100
-    if s['memory']['swpused'] >= crit_value:
+    if int(s['memory']['swpused']) >= crit_value:
         sys.stdout.write("CRITICAL")
         eStat = 2
-    elif s['memory']['swpused'] >= war_value:
+    elif int(s['memory']['swpused']) >= war_value:
         sys.stdout.write("WARNING")
         eStat = 1
     else:
         sys.stdout.write("OK")
         eStat = 0
     sys.stdout.write("- %.2f%% used(%skB out of %skB)|Used=%skB;%s;"
-                     "%s;0;%s\n" % (s['memory']['swpused-percent'],
+                     "%s;0;%s\n" % (float(s['memory']['swpused-percent']),
                                     s['memory']['swpused'],
                                     totalSwap,
                                     s['memory']['swpused'],
@@ -191,14 +217,13 @@ def showMemStat(warning, critical):
     if not s:
         sys.stdout.write("IFACE UNKNOWN\n")
         sys.exit(3)
-    print s
-    totalMem = s['memory']['memfree'] + s['memory']['memused']
+    totalMem = int(s['memory']['memfree']) + int(s['memory']['memused'])
     crit_value = (totalMem * critical) / 100
     war_value = (totalMem * warning) / 100
-    if s['memory']['memused'] >= crit_value:
+    if int(s['memory']['memused']) >= crit_value:
         sys.stdout.write("CRITICAL")
         eStat = 2
-    elif s['memory']['memused'] >= war_value:
+    elif int(s['memory']['memused']) >= war_value:
         sys.stdout.write("WARNING")
         eStat = 1
     else:
@@ -206,7 +231,7 @@ def showMemStat(warning, critical):
         eStat = 0
     sys.stdout.write("- %.2f%% used(%skB out of %skB)|Total=%skB;%s;%s;0;%s"
                      " Used=%skB Buffered=%skB"
-                     " Cached=%skB\n" % (s['memory']['memused-percent'],
+                     " Cached=%skB\n" % (float(s['memory']['memused-percent']),
                                          s['memory']['memused'],
                                          totalMem,
                                          totalMem,
@@ -235,7 +260,7 @@ def showNetStat(iface_list=None, list_type=None):
             if dev['iface'] not in iface_list:
                 continue
         devNames.append(dev['iface'])
-        perfLines.append("%s.rxpck=%s %s.txpck=%s %s.rxkB=%6.4f %s.txkB=%6.4f"
+        perfLines.append("%s.rxpck=%s %s.txpck=%s %s.rxkB=%s %s.txkB=%s"
                          % (dev['iface'], dev['rxpck'],
                             dev['iface'], dev['txpck'],
                             dev['iface'], dev['rxkB'],
@@ -249,24 +274,25 @@ def showNetStat(iface_list=None, list_type=None):
 def parse_input():
     parser = argparse.ArgumentParser(usage='%(prog)s [-h] (\
 \n-m -w <warning> -c <critical> |\n-s -w <warning> -c <critical>\
- |\n-cp -w <warning> -c <critical> |\n-n [-e EXCLUDE [EXCLUDE ...]\
- | -i INCLUDE [INCLUDE ...]])')
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-m', '--memory', action='store_true',
+ |\n-cp -w <warning> -c <critical> |\n-n [-e <exclude>\
+ | -i <include>])')
+    group1 = parser.add_mutually_exclusive_group(required=True)
+    group1.add_argument('-m', '--memory', action='store_true',
                        help="Gives details related to memory")
-    group.add_argument('-s', '--swap', action='store_true',
+    group1.add_argument('-s', '--swap', action='store_true',
                        help="Gives details related to swap")
-    group.add_argument('-cp', '--cpu', action='store_true',
+    group1.add_argument('-cp', '--cpu', action='store_true',
                        help="Gives details related to cpu")
-    group.add_argument('-n', '--network', action='store_true',
+    group1.add_argument('-n', '--network', action='store_true',
                        help="Gives details related to network")
     parser.add_argument("-w", "--warning", action="store", type=int,
                         help="Warning threshold in percentage")
     parser.add_argument("-c", "--critical", action="store", type=int,
                         help="Critical threshold in percentage")
-    parser.add_argument("-e", "--exclude", action="store", nargs='+',
+    group2 = parser.add_mutually_exclusive_group()
+    group2.add_argument("-e", "--exclude", action="append",
                         help="Parameters to be excluded")
-    parser.add_argument("-i", "--include", action="store", nargs='+',
+    group2.add_argument("-i", "--include", action="append",
                         help="Parameters to be included")
     args = parser.parse_args()
     if args.memory or args.swap or args.cpu:

@@ -72,7 +72,7 @@ cp -a server/config/gluster-commands.cfg gluster-nagios-1.1
 cp -a server/config/gluster-host-groups.cfg gluster-nagios-1.1
 cp -a server/config/gluster-host-services.cfg gluster-nagios-1.1
 cp -a server/config/gluster-templates.cfg gluster-nagios-1.1
-cp -a server/config/host1.cfg gluster-nagios-1.1 gluster-nagios-1.1
+cp -a server/config/node1.cfg gluster-nagios-1.1 gluster-nagios-1.1
 
 tar -czf gluster-nagios-1.1.tar.gz gluster-nagios-1.1
 
@@ -89,4 +89,4 @@ rm -fr ~/rpmbuild/RPMS/x86_64/*
 
 echo "Building rpm"
 rpmbuild -ba gluster_nrpe.spec
-rpmbuild -ba pnp4nagios/gluster_nagios.spec
+rpmbuild -ba server/pnp4nagios/gluster_nagios.spec

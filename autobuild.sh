@@ -68,6 +68,11 @@ cp -a server/pnp4nagios/templates/check_disk_and_inode.php gluster-nagios-1.1
 cp -a server/pnp4nagios/templates/check_interfaces.php gluster-nagios-1.1
 cp -a server/pnp4nagios/templates/check_memory.php gluster-nagios-1.1
 cp -a server/pnp4nagios/templates/check_swap_usage.php gluster-nagios-1.1
+cp -a server/config/gluster-commands.cfg gluster-nagios-1.1
+cp -a server/config/gluster-host-groups.cfg gluster-nagios-1.1
+cp -a server/config/gluster-host-services.cfg gluster-nagios-1.1
+cp -a server/config/gluster-templates.cfg gluster-nagios-1.1
+cp -a server/config/host1.cfg gluster-nagios-1.1 gluster-nagios-1.1
 
 tar -czf gluster-nagios-1.1.tar.gz gluster-nagios-1.1
 

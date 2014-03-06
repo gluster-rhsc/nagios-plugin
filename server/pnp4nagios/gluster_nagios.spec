@@ -33,7 +33,7 @@ Buildroot: %{buildroot}
 Requires: rrdtool-perl
 Requires: nagios
 Requires: nagios-plugins-all
-Requires: nagios-plugins-nrpe
+#Requires: nagios-plugins-nrpe
 Requires: nrpe
 Requires: php
 Requires: httpd
@@ -49,12 +49,19 @@ network, cpu, memory and etc.,
 %build
 
 %install
+rm -fr %{buildroot}/etc/nagios/gluster
 mkdir -p %{buildroot}/usr/share/nagios/html/pnp4nagios/templates.dist
+mkdir -p %{buildroot}/etc/nagios/gluster/Default
 cp -a check_cpu_multicore.php  %{buildroot}/usr/share/nagios/html/pnp4nagios/templates.dist
 cp -a check_disk_and_inode.php  %{buildroot}/usr/share/nagios/html/pnp4nagios/templates.dist
 cp -a check_interfaces.php  %{buildroot}/usr/share/nagios/html/pnp4nagios/templates.dist
 cp -a check_memory.php  %{buildroot}/usr/share/nagios/html/pnp4nagios/templates.dist
 cp -a check_swap_usage.php  %{buildroot}/usr/share/nagios/html/pnp4nagios/templates.dist
+cp -a gluster-commands.cfg %{buildroot}/etc/nagios/gluster
+cp -a gluster-host-groups.cfg %{buildroot}/etc/nagios/gluster
+cp -a gluster-host-services.cfg %{buildroot}/etc/nagios/gluster
+cp -a gluster-templates.cfg %{buildroot}/etc/nagios/gluster
+cp -a node1.cfg %{buildroot}/etc/nagios/gluster/Default
 
 %clean
 rm -rf %{buildroot}
@@ -76,72 +83,17 @@ elif grep -q "process_performance_data=0" $NagiosCFGFile ; then
   sed -i -e 's/process_performance_data=0/process_performance_data=1/g' $NagiosCFGFile
 fi
 
-ServicesFile="/etc/nagios/objects/services.cfg"
-if ! grep -q "#gluster nagios template" $ServicesFile; then
-   cat << EOF > $ServicesFile
-#gluster nagios template
-define service{
-use generic-service,srv-pnp
-hostgroup_name  gluster_hosts
-service_description Memory Utilization
-normal_check_interval 1
-check_command check_nrpe!check_memory
-}
-define service{
-use generic-service,srv-pnp
-hostgroup_name  gluster_hosts
-service_description Swap Utilization
-normal_check_interval 1
-check_command check_nrpe!check_swap_usage
-}
-define service{
-use generic-service,srv-pnp
-hostgroup_name  gluster_hosts
-normal_check_interval 1
-service_description Disk Utilization
-check_command check_nrpe!check_disk_and_inode
-}
-define service{
-use generic-service,srv-pnp
-hostgroup_name  gluster_hosts
-service_description Cpu Utilization
-normal_check_interval 1
-check_command check_nrpe!check_cpu_multicore
-}
-define service{
-use generic-service,srv-pnp
-hostgroup_name  gluster_hosts
-service_description Network Utilization
-normal_check_interval 1
-check_command check_nrpe!check_interfaces
-}
-EOF
-fi
 
 cat >> $NagiosCFGFile <<EOF
+#rhs performance monitoring
+
+# Definitions specific to gluster
+cfg_dir=/etc/nagios/gluster
 
 service_perfdata_command=process-service-perfdata
 host_perfdata_command=process-host-perfdata
 EOF
 
-TemplatesCfgFile="/etc/nagios/objects/templates.cfg"
-
-if ! grep -q "graph icon template" $TemplatesCfgFile; then
-cat >> $TemplatesCfgFile <<EOF
-### graph icon template ###
-define host {
-   name       host-pnp
-   action_url /pnp4nagios/index.php/graph?host=\$HOSTNAME\$&srv=_HOST_
-   register   0
-}
-
-define service {
-   name       srv-pnp
-   action_url /pnp4nagios/index.php/graph?host=\$HOSTNAME\$&srv=\$SERVICEDESC\$
-   register   0
-}
-EOF
-fi
 
 CommandFile="/etc/nagios/objects/commands.cfg"
 if [ -f $CommandFile ]; then
@@ -170,31 +122,6 @@ define command {
        command_name    process-host-perfdata
        command_line    /usr/bin/perl /usr/local/pnp4nagios/libexec/process_perfdata.pl -d HOSTPERFDATA
 }
-
-define command {
-       command_name check_disk_and_inode
-       command_line \$USER1\$/check_nrpe -H \$HOSTADDRESS\$ -c check_disk_and_inode
-}
-
-define command {
-command_name check_cpu_multicore
-command_line \$USER1\$/check_nrpe -H \$HOSTADDRESS\$ -c check_cpu_multicore
-}
-
-define command {
-       command_name check_memory
-       command_line \$USER1\$/check_nrpe -H \$HOSTADDRESS\$ -c check_memory
-}
-
-define command {
-       command_name check_swap_usage
-       command_line \$USER1\$/check_nrpe -H \$HOSTADDRESS\$ -c check_swap_usage
-}
-
-define command {
-       command_name check_interfaces
-       command_line \$USER1\$/check_nrpe -H \$HOSTADDRESS\$ -c check_interfaces
-}
 EOF
 fi
 fi
@@ -207,6 +134,11 @@ fi
 /usr/share/nagios/html/pnp4nagios/templates.dist/check_interfaces.php
 /usr/share/nagios/html/pnp4nagios/templates.dist/check_memory.php
 /usr/share/nagios/html/pnp4nagios/templates.dist/check_swap_usage.php
+/etc/nagios/gluster/gluster-commands.cfg
+/etc/nagios/gluster/gluster-host-groups.cfg
+/etc/nagios/gluster/gluster-host-services.cfg
+/etc/nagios/gluster/gluster-templates.cfg
+/etc/nagios/gluster/Default/node1.cfg
 
 
 %changelog

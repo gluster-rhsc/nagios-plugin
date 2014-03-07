@@ -61,11 +61,11 @@ def appendStatus(lst, level, typ, device, mpath, usage):
     lst.append("%s:%s:%s;%s;%s" % (level, device, mpath, usage))
 
 
-def getMounts(searchQuery, excludeList=[]):
+def getMounts(searchQuery=None, excludeList=[]):
     mountPaths = []
     f = open("/etc/mtab")
     for i in f.readlines():
-        if i.startswith(searchQuery):
+        if searchQuery and i.startswith(searchQuery):
             if not excludeList:
                 mountPaths.append(i.split()[0])
             else:
@@ -122,11 +122,13 @@ if __name__ == '__main__':
 
     if options.lvm:
         searchQuery = "/dev/mapper"
+    elif options.all:
+        searchQuery = None
     else:
         searchQuery = "/"
 
     if not options.mountPath or options.lvm or options.all:
-        options.mountPath = getMounts(searchQuery, options.exclude)
+        options.mountPath += getMounts(searchQuery, options.exclude)
 
     #if not options.mountPath:
     #    parser.print_help()

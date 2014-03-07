@@ -32,9 +32,7 @@ Buildroot: %{buildroot}
 
 Requires: rrdtool-perl
 Requires: nagios
-Requires: nagios-plugins-all
-#Requires: nagios-plugins-nrpe
-Requires: nrpe
+Requires: nagios-plugins-nrpe
 Requires: php
 Requires: httpd
 Requires: pnp4nagios
@@ -84,6 +82,7 @@ elif grep -q "process_performance_data=0" $NagiosCFGFile ; then
 fi
 
 
+if ! grep -q "#rhs performance monitoring" $NagiosCFGFile; then
 cat >> $NagiosCFGFile <<EOF
 #rhs performance monitoring
 
@@ -93,7 +92,7 @@ cfg_dir=/etc/nagios/gluster
 service_perfdata_command=process-service-perfdata
 host_perfdata_command=process-host-perfdata
 EOF
-
+fi
 
 CommandFile="/etc/nagios/objects/commands.cfg"
 if [ -f $CommandFile ]; then
@@ -115,17 +114,23 @@ cat >> $CommandFile <<EOF
 ### gluster nagios template ###
 define command {
        command_name    process-service-perfdata
-       command_line    /usr/bin/perl /usr/local/pnp4nagios/libexec/process_perfdata.pl
+       command_line    /usr/bin/perl /usr/libexec/pnp4nagios/process_perfdata.pl
 }
 
 define command {
        command_name    process-host-perfdata
-       command_line    /usr/bin/perl /usr/local/pnp4nagios/libexec/process_perfdata.pl -d HOSTPERFDATA
+       command_line    /usr/bin/perl /usr/libexec/pnp4nagios/process_perfdata.pl -d HOSTPERFDATA
 }
 EOF
 fi
 fi
 fi
+
+%if 0%{?rhel} == 6
+ /sbin/chkconfig nagios on
+ /sbin/service nagios start >/dev/null 2>&1
+ /sbin/service httpd start >/dev/null 2>&1
+%endif
 
 %files
 %defattr(-, root, root, -)

@@ -78,7 +78,7 @@ NagiosCFGFile="/etc/nagios/nagios.cfg"
 sed -i '/etc\/nagios\/objects\/localhost.cfg/d' $NagiosCFGFile
 
 /sbin/iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-/sbin/iptables-save
+/sbin/service iptables save
 
 if grep -q "#process_performance_data=0" $NagiosCFGFile; then
   sed -i -e 's/#process_performance_data=0/process_performance_data=1/g' $NagiosCFGFile

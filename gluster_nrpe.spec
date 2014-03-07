@@ -42,7 +42,7 @@ rm -rf %{buildroot}
 %post
 if [ $1 == 1 ]; then
 /sbin/iptables -A INPUT -p tcp --dport 5666 -j ACCEPT
-/sbin/iptables-save
+/sbin/service iptables save
 
 sed -i 's/10 \* \* \* \* root \/usr\/lib64\/sa\/sa1/1 \* \* \* \* root \/usr\/lib64\/sa\/sa1/g' /etc/cron.d/sysstat
 

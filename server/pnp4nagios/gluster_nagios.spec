@@ -50,6 +50,8 @@ network, cpu, memory and etc.,
 
 %install
 rm -fr %{buildroot}/etc/nagios/gluster
+rm -fr %{buildroot}/usr/lib64/nagios/plugins/eventhandlers
+mkdir -p %{buildroot}/usr/lib64/nagios/plugins/eventhandlers
 mkdir -p %{buildroot}/usr/share/nagios/html/pnp4nagios/templates.dist
 mkdir -p %{buildroot}/etc/nagios/gluster/Default
 cp -a check_cpu_multicore.php  %{buildroot}/usr/share/nagios/html/pnp4nagios/templates.dist
@@ -73,9 +75,9 @@ rm -rf %{buildroot}
 if [ $1 == 1 ]; then
 
 NagiosCFGFile="/etc/nagios/nagios.cfg"
-#sed -i '/etc\/nagios\/objects\/localhost.cfg/d' $NagiosCFGFile
+sed -i '/etc\/nagios\/objects\/localhost.cfg/d' $NagiosCFGFile
 
-/sbin/iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+/sbin/iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 /sbin/iptables-save
 
 if grep -q "#process_performance_data=0" $NagiosCFGFile; then
@@ -101,6 +103,7 @@ cfg_dir=/etc/nagios/gluster
 
 service_perfdata_command=process-service-perfdata
 host_perfdata_command=process-host-perfdata
+broker_module=/usr/lib64/check_mk/livestatus.o /var/spool/nagios/cmd/live
 EOF
 fi
 

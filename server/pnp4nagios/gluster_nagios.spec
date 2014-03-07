@@ -36,6 +36,8 @@ Requires: nagios-plugins-nrpe
 Requires: php
 Requires: httpd
 Requires: pnp4nagios
+Requires: check-mk-livestatus
+Requires: nagios-plugins-all
 
 %description
 Gluster nagios plugins and pnp4nagios templates for monitoring disk,
@@ -60,6 +62,9 @@ cp -a gluster-host-groups.cfg %{buildroot}/etc/nagios/gluster
 cp -a gluster-host-services.cfg %{buildroot}/etc/nagios/gluster
 cp -a gluster-templates.cfg %{buildroot}/etc/nagios/gluster
 cp -a node1.cfg %{buildroot}/etc/nagios/gluster/Default
+cp -a check_remote_host.py %{buildroot}/usr/lib64/nagios/plugins
+cp -a gluster_host_service_handler.py %{buildroot}/usr/lib64/nagios/plugins/eventhandlers
+
 
 %clean
 rm -rf %{buildroot}
@@ -68,6 +73,11 @@ rm -rf %{buildroot}
 if [ $1 == 1 ]; then
 
 NagiosCFGFile="/etc/nagios/nagios.cfg"
+#sed -i '/etc\/nagios\/objects\/localhost.cfg/d' $NagiosCFGFile
+
+/sbin/iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+/sbin/iptables-save
+
 if grep -q "#process_performance_data=0" $NagiosCFGFile; then
   sed -i -e 's/#process_performance_data=0/process_performance_data=1/g' $NagiosCFGFile
 elif grep -q "process_performance_data=0" $NagiosCFGFile ; then
@@ -121,13 +131,17 @@ define command {
        command_name    process-host-perfdata
        command_line    /usr/bin/perl /usr/libexec/pnp4nagios/process_perfdata.pl -d HOSTPERFDATA
 }
+
 EOF
 fi
 fi
 fi
 
+
 %if 0%{?rhel} == 6
  /sbin/chkconfig nagios on
+ /sbin/chkconfig httpd on
+ /sbin/service iptables restart >/dev/null 2>&1
  /sbin/service nagios start >/dev/null 2>&1
  /sbin/service httpd start >/dev/null 2>&1
 %endif
@@ -144,7 +158,8 @@ fi
 /etc/nagios/gluster/gluster-host-services.cfg
 /etc/nagios/gluster/gluster-templates.cfg
 /etc/nagios/gluster/Default/node1.cfg
-
+/usr/lib64/nagios/plugins/check_remote_host.py
+/usr/lib64/nagios/plugins/eventhandlers/gluster_host_service_handler.py
 
 %changelog
 * Thu Feb 13 2014 Timothy Asir Jeyasingh <tjeyasin@redhat.com>

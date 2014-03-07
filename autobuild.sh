@@ -72,7 +72,10 @@ cp -a server/config/gluster-commands.cfg gluster-nagios-1.1
 cp -a server/config/gluster-host-groups.cfg gluster-nagios-1.1
 cp -a server/config/gluster-host-services.cfg gluster-nagios-1.1
 cp -a server/config/gluster-templates.cfg gluster-nagios-1.1
-cp -a server/config/node1.cfg gluster-nagios-1.1 gluster-nagios-1.1
+cp -a server/config/node1.cfg gluster-nagios-1.1
+cp -a nagios/plugins/check_remote_host.py gluster-nagios-1.1
+cp -a nagios/plugins/gluster_host_service_handler.py gluster-nagios-1.1
+
 
 tar -czf gluster-nagios-1.1.tar.gz gluster-nagios-1.1
 

@@ -20,6 +20,7 @@ Source0:                gluster-nrpe.tar.gz
 
 
 Requires: nrpe
+Requires: sysstat
 
 %description
 Gluster nrpe plugins script for monitoring disk, network, cup and memory
@@ -40,6 +41,11 @@ rm -rf %{buildroot}
 
 %post
 if [ $1 == 1 ]; then
+/sbin/iptables -A INPUT -p tcp --dport 5666 -j ACCEPT
+/sbin/iptables-save
+
+sed -i 's/10 \* \* \* \* root \/usr\/lib64\/sa\/sa1/1 \* \* \* \* root \/usr\/lib64\/sa\/sa1/g' /etc/cron.d/sysstat
+
 cat >> /etc/nagios/nrpe.cfg <<EOF
 ### gluster nrpe plugins ###
 command[check_disk_and_inode]=/usr/lib64/nagios/plugins/gluster/check_disk_and_inode.py -w 80 -c 90 -l -i /boot -i /var -i /root -n
@@ -49,6 +55,13 @@ command[check_cpu_multicore]=/usr/lib64/nagios/plugins/gluster/sadf.py -cp -w 80
 command[check_interfaces]=/usr/lib64/nagios/plugins/gluster/sadf.py -n -e lo
 EOF
 fi
+
+%if 0%{?rhel} == 6
+ /sbin/chkconfig nrpe on
+ /sbin/service iptables restart >/dev/null 2>&1
+ /sbin/service crond restart >/dev/null 2>&1
+%endif
+
 
 
 %preun

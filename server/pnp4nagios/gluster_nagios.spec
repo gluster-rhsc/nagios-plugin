@@ -77,8 +77,7 @@ if [ $1 == 1 ]; then
 NagiosCFGFile="/etc/nagios/nagios.cfg"
 sed -i '/etc\/nagios\/objects\/localhost.cfg/d' $NagiosCFGFile
 
-/sbin/iptables -I INPUT 2 -p tcp --dport 80 -j ACCEP
-/sbin/service iptables save
+/sbin/iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
 
 if grep -q "#process_performance_data=0" $NagiosCFGFile; then
   sed -i -e 's/#process_performance_data=0/process_performance_data=1/g' $NagiosCFGFile
@@ -93,6 +92,7 @@ elif grep -q "process_performance_data=0" $NagiosCFGFile ; then
   sed -i -e 's/process_performance_data=0/process_performance_data=1/g' $NagiosCFGFile
 fi
 
+/sbin/service iptables save
 
 if ! grep -q "#rhs performance monitoring" $NagiosCFGFile; then
 cat >> $NagiosCFGFile <<EOF

@@ -148,7 +148,12 @@ if __name__ == "__main__":
 	        sys.exit(STATUS_CRITICAL)
 
     # Check ping status of the node, if its not reachable exit
-    pingStatus = getPingStatus(hostAddr)
+    try:
+        pingStatus = getPingStatus(hostAddr)
+    except (checkPingCmdExecFailedException) as e:
+        print "Host Status %s - Host not reachable" % (_commandStatusStrs[STATUS_UNKNOWN])
+        sys.exit(_commandStatusStrs[STATUS_UNKNOWN])
+
     if pingStatus != STATUS_OK:
         print "Host Status %s - Host not reachable" % (_commandStatusStrs[STATUS_UNKNOWN])
         sys.exit(pingStatus)
@@ -163,9 +168,17 @@ if __name__ == "__main__":
     # Calculate the consolidated status for the host based on above status details
     finalStatus = pingStatus | diskPerfStatus | cpuPerfStatus | memPerfStatus | swapPerfStatus | nwPerfStatus
 
+    # Get the list of ciritical services
+    criticalSrvcs = []
+    if diskPerfStatus == STATUS_CRITICAL: criticalSrvcs.append('Disk Utilization')
+    if cpuPerfStatus == STATUS_CRITICAL: criticalSrvcs.append('Cpu Utilization')
+    if memPerfStatus == STATUS_CRITICAL: criticalSrvcs.append('Memory Utilization')
+    if swapPerfStatus == STATUS_CRITICAL: criticalSrvcs.append('Swap Utilization')
+    if nwPerfStatus == STATUS_CRITICAL: criticalSrvcs.append('Network Utilization')
+
     # Return the status
     if finalStatus == STATUS_CRITICAL:
-        print "Host Status %s - Some of the services in CRITICAL state" % _commandStatusStrs[STATUS_WARNING]
+        print "Host Status %s - Service(s) %s in CRITICAL state" % (_commandStatusStrs[STATUS_WARNING], criticalSrvcs)
         sys.exit(STATUS_WARNING)
 
     print "Host Status %s - Services in good health" % _commandStatusStrs[STATUS_OK]

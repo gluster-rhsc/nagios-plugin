@@ -32,6 +32,7 @@ import shlex
 import subprocess
 import socket
 import getopt
+import netifaces
 
 STATUS_OK = 0
 STATUS_WARNING = 1
@@ -123,6 +124,17 @@ def showUsage():
     sys.stderr.write(usage)
 
 
+# Gets the IP address for the localhost
+def getIpAddr(addr):
+    interfaces = netifaces.interfaces()
+    for inf in interfaces:
+        if inf == 'lo':
+            continue
+        iface = netifaces.ifaddresses(inf).get(netifaces.AF_INET)
+        if iface != None:
+            for item in iface:
+                return item['addr']
+
 # Main method
 if __name__ == "__main__":
     try :
@@ -146,6 +158,10 @@ if __name__ == "__main__":
             else:
                 showUsage()
 	        sys.exit(STATUS_CRITICAL)
+
+    # If host name passed as localhost
+    if hostAddr == 'localhost':
+        hostAddr = getIpAddr(hostAddr)
 
     # Check ping status of the node, if its not reachable exit
     try:
